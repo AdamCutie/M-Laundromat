@@ -8,6 +8,7 @@ const settingRoutes = require('./routes/settingRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const machineRoutes = require('./routes/machineRoutes');
 const authRoutes = require('./routes/authRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
 
 // 2. CONFIGURATION
 dotenv.config(); //load the variables from .env (like PORT=5000)
@@ -25,11 +26,12 @@ app.use(express.json());
 app.use(cors());
 
 //  USE THE ROUTES
+app.use('/api/auth', authRoutes);
+app.use('/api/attendance', attendanceRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/machines', machineRoutes);
-app.use('/api/auth', authRoutes);
 
 // 5. TEST ROUTE 
 app.get('/', (req, res) => {
