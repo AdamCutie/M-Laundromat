@@ -1,0 +1,44 @@
+const Inventory = require('../models/Inventory');
+
+// @desc    Get all inventory items
+// @route   GET /api/inventory
+const getInventory = async (req, res) => {
+  try {
+    const items = await Inventory.find().sort({ itemName: 1 }); // Sort A-Z
+    res.status(200).json(items);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add a new product
+// @route   POST /api/inventory
+const addInventoryItem = async (req, res) => {
+  try {
+    const { itemName, stockLevel, unitPrice, costPrice } = req.body;
+
+    // Validation
+    if (!itemName || !unitPrice) {
+      return res.status(400).json({ message: "Item Name and Price are required" });
+    }
+
+    // Check if item already exists
+    const exists = await Inventory.findOne({ itemName });
+    if (exists) {
+      return res.status(400).json({ message: "Item already exists" });
+    }
+
+    const newItem = await Inventory.create({
+      itemName,
+      stockLevel: stockLevel || 0,
+      unitPrice,
+      costPrice: costPrice || 0
+    });
+
+    res.status(201).json(newItem);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { getInventory, addInventoryItem };

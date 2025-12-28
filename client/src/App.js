@@ -1,45 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import orderService from './services/orderService'; // Import our new service
+import React from 'react';
 import './App.css';
+// Import the component we just built
+import OrderList from './components/OrderList';
+import OrderForm from './components/OrderForm';
 
 function App() {
-  const [orders, setOrders] = useState([]);
-  const [error, setError] = useState(null);
-
-  // useEffect runs once when the page loads
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const data = await orderService.getAllOrders();
-        setOrders(data); // Save the data to state
-        console.log("Fetched Orders:", data);
-      } catch (err) {
-        console.error("Error fetching orders:", err);
-        setError("Failed to connect to backend");
-      }
-    };
-
-    fetchOrders();
-  }, []);
-
   return (
-    <div className="App" style={{ padding: '20px' }}>
-      <h1>M-Laundromat System</h1>
-      
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="App" style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
+      <h1 style={{ textAlign: 'center', color: '#333' }}>🌊 M-Laundromat System</h1>
+      <OrderForm />
 
-      <h2>Order List (Test)</h2>
-      {orders.length === 0 ? (
-        <p>No orders found (or loading...)</p>
-      ) : (
-        <ul>
-          {orders.map((order) => (
-            <li key={order._id}>
-              <strong>{order.customerName}</strong> - {order.serviceType} (₱{order.totalPrice})
-            </li>
-          ))}
-        </ul>
-      )}
+      <hr style={{ margin: '40px 0' }} />
+      
+      {/* Render the OrderList Component here */}
+      <OrderList />
     </div>
   );
 }

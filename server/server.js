@@ -4,6 +4,8 @@ const dotenv = require('dotenv');   // to read the .env file
 const cors = require('cors');       // to allow the frontend to talk to this server 
 const connectDB = require('./config/db'); //import the file
 const orderRoutes = require('./routes/orderRoutes');
+const settingRoutes = require('./routes/settingRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
 
 // 2. CONFIGURATION
 dotenv.config(); //load the variables from .env (like PORT=5000)
@@ -22,6 +24,8 @@ app.use(cors());
 
 //  USE THE ROUTES
 app.use('/api/orders', orderRoutes);
+app.use('/api/settings', settingRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 // 5. TEST ROUTE 
 app.get('/', (req, res) => {
