@@ -12,6 +12,7 @@ import OrderForm from './components/OrderForm';
 import InventoryManager from './components/InventoryManager';
 import MachineDashboard from './components/MachineDashboard';
 import Analytics from './components/Analytics';
+import StaffAttendance from './components/StaffAttendance';
 
 // Create a component to hold the main dashboard
 const Dashboard = () => {
@@ -26,6 +27,9 @@ const Dashboard = () => {
           <button onClick={logout} style={{ padding: '5px 10px', background: '#dc3545', color: 'white', border: 'none', cursor: 'pointer' }}>Logout</button>
         </div>
       </div>
+
+      {/* 1. ATTENDANCE (New!) */}
+      <StaffAttendance />
       
       {/* 1. ANALYTICS (Money First!) */}
       <Analytics />
