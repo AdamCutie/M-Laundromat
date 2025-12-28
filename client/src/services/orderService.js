@@ -19,6 +19,11 @@ const orderService = {
   getStats: async () => {
     const response = await api.get('/orders/stats');
     return response.data;
+  },
+
+  updateStatus: async (id, status) => {
+    const response = await api.put(`/orders/${id}`, { status });
+    return response.data;
   }
 
 };
