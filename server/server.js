@@ -6,6 +6,7 @@ const connectDB = require('./config/db'); //import the file
 const orderRoutes = require('./routes/orderRoutes');
 const settingRoutes = require('./routes/settingRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
+const machineRoutes = require('./routes/machineRoutes');
 
 // 2. CONFIGURATION
 dotenv.config(); //load the variables from .env (like PORT=5000)
@@ -26,6 +27,7 @@ app.use(cors());
 app.use('/api/orders', orderRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/machines', machineRoutes);
 
 // 5. TEST ROUTE 
 app.get('/', (req, res) => {

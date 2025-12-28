@@ -4,11 +4,18 @@ import './App.css';
 import OrderList from './components/OrderList';
 import OrderForm from './components/OrderForm';
 import InventoryManager from './components/InventoryManager';
+import MachineDashboard from './components/MachineDashboard';
 
 function App() {
   return (
     <div className="App" style={{ padding: '40px', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ textAlign: 'center', color: '#333' }}>🌊 M-Laundromat System</h1>
+
+      {/* 1. MACHINE DASHBOARD (New!) */}
+      <MachineDashboard />
+      
+      <br />
+      
       {/* 1. ORDER FORM */}
       <OrderForm />
       <br />
