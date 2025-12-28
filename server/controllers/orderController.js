@@ -79,8 +79,40 @@ const getAllOrders = async (req, res) =>{
     }
 };
 
+// @desc    Get Order Stats
+// @route   GET /api/orders/stats
+const getOrderStats = async (req, res) => {
+  try {
+    const stats = await Order.aggregate([
+      {
+        // Group ALL orders together
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$totalPrice" }, // Sum up all prices
+          totalOrders: { $sum: 1 },              // Count how many orders
+          avgOrderValue: { $avg: "$totalPrice" } // Calculate average
+        }
+      }
+    ]);
+
+    // Also get count by status (Pending vs Completed)
+    const statusStats = await Order.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } }
+    ]);
+
+    res.status(200).json({ 
+      revenue: stats[0]?.totalRevenue || 0,
+      count: stats[0]?.totalOrders || 0,
+      breakdown: statusStats
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Export these functions so routes can use them
 module.exports = {
 createOrder,
-getAllOrders
+getAllOrders,
+getOrderStats
 };

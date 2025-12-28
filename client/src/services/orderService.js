@@ -14,7 +14,13 @@ const orderService = {
     // This sends a POST request to /api/orders with the data
     const response = await api.post('/orders', orderData);
     return response.data;
+  },
+  
+  getStats: async () => {
+    const response = await api.get('/orders/stats');
+    return response.data;
   }
+
 };
 
 export default orderService;
