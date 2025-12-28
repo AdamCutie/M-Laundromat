@@ -3,6 +3,8 @@ node_modules/
 
 # Environment variables
 .env
+gather_code.js
+full_project_code.txt
 
 # System files
 .DS_Store

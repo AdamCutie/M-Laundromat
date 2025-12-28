@@ -3,6 +3,7 @@ const express = require('express'); // the main framework
 const dotenv = require('dotenv');   // to read the .env file
 const cors = require('cors');       // to allow the frontend to talk to this server 
 const connectDB = require('./config/db'); //import the file
+const userRoutes = require('./routes/userRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const settingRoutes = require('./routes/settingRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
@@ -27,6 +28,7 @@ app.use(cors());
 
 //  USE THE ROUTES
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/settings', settingRoutes);

@@ -13,6 +13,7 @@ import InventoryManager from './components/InventoryManager';
 import MachineDashboard from './components/MachineDashboard';
 import Analytics from './components/Analytics';
 import StaffAttendance from './components/StaffAttendance';
+import StaffManager from './components/StaffManager';
 
 // Create a component to hold the main dashboard
 const Dashboard = () => {
@@ -46,6 +47,9 @@ const Dashboard = () => {
 
       {/* 2. INVENTORY MANAGER (New!) */}
       <InventoryManager />
+
+      {/* NEW: Staff Management */}
+      <StaffManager />
 
       <hr style={{ margin: '40px 0' }} />
       
