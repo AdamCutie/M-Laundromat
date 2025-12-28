@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import orderService from '../services/orderService';
 import settingService from '../services/settingService';
 import inventoryService from '../services/inventoryService'; // <--- [NEW]
+import { printReceipt } from '../utils/printReceipt';
 
 const OrderForm = () => {
   // 1. STATE: Form Data
@@ -96,18 +97,28 @@ const OrderForm = () => {
     setCart([...cart, newItem]);
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Send the main data + the cart (addOns)
-      await orderService.createOrder({ ...formData, addOns: cart });
+      // 1. Send data and CAPTURE the result (we need the 'response' variable)
+      const response = await orderService.createOrder({ ...formData, addOns: cart });
+      
       alert("✅ Order Created Successfully!");
+
+      // 2. INSERT PRINT LOGIC HERE
+      // We use 'response' because it contains the Date and Order ID from the database
+      if(window.confirm("Do you want to print the receipt now?")) {
+         printReceipt(response); 
+      }
+
+      // 3. Reload the page
       window.location.reload(); 
     } catch (err) {
       alert("❌ Error: " + (err.response?.data?.message || err.message));
     }
   };
 
+  
   if (!rates) return <p>Loading System Prices...</p>;
 
   return (
