@@ -11,6 +11,12 @@ const inventoryService = {
   addItem: async (itemData) => {
     const response = await api.post('/inventory', itemData);
     return response.data;
+  },
+
+  // Update Item (Restock)
+  update: async (id, data) => {
+    const response = await api.patch(`/inventory/${id}`, data);
+    return response.data;
   }
 };
 
