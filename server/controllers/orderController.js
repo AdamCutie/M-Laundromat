@@ -1,78 +1,86 @@
+const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Inventory = require('../models/Inventory');
 
-// @desc    Create a new order
+// @desc    Create a new order & Deduct Inventory (Atomic Transaction)
 // @route   POST /api/orders
 // @access  Staff/Admin
 const createOrder = async (req, res) => {
-    try {
-    // 1. Destructure the data we need from the user's request
-    // "req.body" is the JSON data the frontend sends us
-    const {
-    customerName,
-    serviceType,
-    weight,
-    washCount,
-    dryCount,
-    totalPrice,
-    addOns
-    } = req.body;
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // 2. Basic Validation (The Model does most of this, but good to check here too)
-    if (!customerName || !serviceType || !totalPrice) {
-        return res.status(400).json({ message: "Please fill in all required fields" });
-    }
-    // 2. [NEW] HANDLE INVENTORY DEDUCTION
-    // If the order has add-ons, we must reduce the stock for each item
-    if (addOns && addOns.length > 0) {
-      for (const item of addOns) {
-        // Find the product in the database
-        const product = await Inventory.findById(item.itemId);
-        
-        if (product) {
-          // Check if we have enough stock
-          if (product.stockLevel < item.quantity) {
-             return res.status(400).json({ message: `Not enough stock for ${product.itemName}` });
-          }
-          
-          // Deduct the stock
-          product.stockLevel -= item.quantity;
-          await product.save();
+    try {
+        const {
+            customerName,
+            serviceType,
+            weight,
+            washCount,
+            dryCount,
+            totalPrice,
+            addOns
+        } = req.body;
+
+        // 1. Basic Validation
+        if (!customerName || !serviceType || totalPrice === undefined) {
+            throw new Error("Please fill in all required fields");
         }
-      }
-    }
-    // 3. Create the Order in the Database
-    // "await" means: "Pause here and wait for MongoDB to finish saving."
-    const newOrder = await Order.create({
-    customerName,
-    serviceType,
-    weight,
-    washCount,
-    dryCount,
-    totalPrice,
-    addOns: addOns || [],
-    status: 'Pending' // Default status
-    });
-    // 4. Send Success Response
-    // 201 means "Created Successfully"
-    res.status(201).json(newOrder);
+
+        // 2. Handle Inventory Deduction (Atomic Check)
+        // If order has add-ons, verify stock and deduct within the session
+        if (addOns && addOns.length > 0) {
+            for (const item of addOns) {
+                // Find and update in one go to prevent race conditions
+                const product = await Inventory.findOneAndUpdate(
+                    { _id: item.itemId, stockLevel: { $gte: item.quantity } }, // Filter: Must have enough stock
+                    { $inc: { stockLevel: -item.quantity } }, // Update: Decrease stock
+                    { new: true, session } // Options: Use this transaction session
+                );
+
+                if (!product) {
+                    // If product is null, it means either it doesn't exist OR stock was too low
+                    throw new Error(`Insufficient stock or invalid item for item ID: ${item.itemId}`);
+                }
+            }
+        }
+
+        // 3. Create the Order
+        const newOrder = await Order.create([{
+            customerName,
+            serviceType,
+            weight,
+            washCount,
+            dryCount,
+            totalPrice,
+            addOns: addOns || [],
+            status: 'Pending'
+        }], { session });
+
+        // 4. Commit Transaction
+        // If we get here, everything is good. Save changes to DB.
+        await session.commitTransaction();
+        session.endSession();
+
+        res.status(201).json(newOrder[0]); // Order.create returns an array when using sessions
 
     } catch (error) {
-    // 5. Handle Errors
-    // If the database connection drops or validation fails, code jumps here.
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not create order" });
+        // 5. Rollback on Error
+        // If anything failed above (low stock, DB error), undo ALL changes
+        await session.abortTransaction();
+        session.endSession();
+        
+        console.error("Order Transaction Failed:", error.message);
+        
+        // Return readable error message to frontend
+        const statusCode = error.message.includes("Insufficient stock") ? 400 : 500;
+        res.status(statusCode).json({ message: error.message || "Server Error: Could not create order" });
     }
 };
 
 // @desc    Get all orders
 // @route   GET /api/orders
-const getAllOrders = async (req, res) =>{
+const getAllOrders = async (req, res) => {
     try {
-        // Find all orders and sort them by date (Newest first)
-        // -1 means Descending (Newest to Oldest
         const orders = await Order.find().sort({ createdAt: -1 });
-        
         res.status(200).json(orders);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -82,63 +90,64 @@ const getAllOrders = async (req, res) =>{
 // @desc    Get Order Stats
 // @route   GET /api/orders/stats
 const getOrderStats = async (req, res) => {
-  try {
-    const stats = await Order.aggregate([
-      {
-        // Group ALL orders together
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: "$totalPrice" }, // Sum up all prices
-          totalOrders: { $sum: 1 },              // Count how many orders
-          avgOrderValue: { $avg: "$totalPrice" } // Calculate average
-        }
-      }
-    ]);
+    try {
+        // Parallel execution for faster stats
+        const [revenueStats, statusStats] = await Promise.all([
+            Order.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        totalRevenue: { $sum: "$totalPrice" },
+                        totalOrders: { $sum: 1 },
+                        avgOrderValue: { $avg: "$totalPrice" }
+                    }
+                }
+            ]),
+            Order.aggregate([
+                { $group: { _id: "$status", count: { $sum: 1 } } }
+            ])
+        ]);
 
-    // Also get count by status (Pending vs Completed)
-    const statusStats = await Order.aggregate([
-      { $group: { _id: "$status", count: { $sum: 1 } } }
-    ]);
-
-    res.status(200).json({ 
-      revenue: stats[0]?.totalRevenue || 0,
-      count: stats[0]?.totalOrders || 0,
-      breakdown: statusStats
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+        res.status(200).json({
+            revenue: revenueStats[0]?.totalRevenue || 0,
+            count: revenueStats[0]?.totalOrders || 0,
+            breakdown: statusStats
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 // @desc    Update Order Status
 // @route   PUT /api/orders/:id
 const updateOrderStatus = async (req, res) => {
-  try {
-    const { status } = req.body;
-    const order = await Order.findById(req.params.id);
+    try {
+        const { status } = req.body;
+        
+        const updates = { status };
+        if (status === 'Completed') {
+            updates.completedAt = new Date();
+        }
 
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+        const updatedOrder = await Order.findByIdAndUpdate(
+            req.params.id,
+            { $set: updates },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedOrder) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        res.status(200).json(updatedOrder);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-
-    order.status = status;
-    
-    // If completed, mark the completion time
-    if (status === 'Completed') {
-      order.completedAt = new Date();
-    }
-
-    const updatedOrder = await order.save();
-    res.status(200).json(updatedOrder);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
 };
 
-// Export these functions so routes can use them
 module.exports = {
-createOrder,
-getAllOrders,
-getOrderStats,
-updateOrderStatus
+    createOrder,
+    getAllOrders,
+    getOrderStats,
+    updateOrderStatus
 };
