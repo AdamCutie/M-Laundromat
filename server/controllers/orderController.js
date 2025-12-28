@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const Inventory = require('../models/Inventory');
 
 // @desc    Create a new order
 // @route   POST /api/orders
@@ -13,12 +14,32 @@ const createOrder = async (req, res) => {
     weight,
     washCount,
     dryCount,
-    totalPrice
+    totalPrice,
+    addOns
     } = req.body;
 
     // 2. Basic Validation (The Model does most of this, but good to check here too)
     if (!customerName || !serviceType || !totalPrice) {
         return res.status(400).json({ message: "Please fill in all required fields" });
+    }
+    // 2. [NEW] HANDLE INVENTORY DEDUCTION
+    // If the order has add-ons, we must reduce the stock for each item
+    if (addOns && addOns.length > 0) {
+      for (const item of addOns) {
+        // Find the product in the database
+        const product = await Inventory.findById(item.itemId);
+        
+        if (product) {
+          // Check if we have enough stock
+          if (product.stockLevel < item.quantity) {
+             return res.status(400).json({ message: `Not enough stock for ${product.itemName}` });
+          }
+          
+          // Deduct the stock
+          product.stockLevel -= item.quantity;
+          await product.save();
+        }
+      }
     }
     // 3. Create the Order in the Database
     // "await" means: "Pause here and wait for MongoDB to finish saving."
@@ -29,6 +50,7 @@ const createOrder = async (req, res) => {
     washCount,
     dryCount,
     totalPrice,
+    addOns: addOns || [],
     status: 'Pending' // Default status
     });
     // 4. Send Success Response
