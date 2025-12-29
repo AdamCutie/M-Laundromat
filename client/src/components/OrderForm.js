@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import orderService from '../services/orderService';
 import settingService from '../services/settingService';
-import inventoryService from '../services/inventoryService'; // <--- [NEW]
+import inventoryService from '../services/inventoryService';
 import { printReceipt } from '../utils/printReceipt';
 
 const OrderForm = () => {
   // 1. STATE: Form Data
   const [formData, setFormData] = useState({
     customerName: '',
+    customerPhone: '', // ADDED: Phone number field
     serviceType: 'Full-Service',
     weight: 0,
     washCount: 0,
@@ -17,11 +18,11 @@ const OrderForm = () => {
 
   // 2. DATA STATE
   const [rates, setRates] = useState(null);
-  const [inventoryItems, setInventoryItems] = useState([]); // All available products
+  const [inventoryItems, setInventoryItems] = useState([]);
   
-  // 3. CART STATE (Items added to this order)
+  // 3. CART STATE
   const [cart, setCart] = useState([]); 
-  const [selectedItem, setSelectedItem] = useState(''); // Currently selected in dropdown
+  const [selectedItem, setSelectedItem] = useState('');
   const [itemQuantity, setItemQuantity] = useState(1);
 
   // --- INITIAL DATA LOADING ---
@@ -34,7 +35,6 @@ const OrderForm = () => {
         const items = await inventoryService.getInventory();
         setInventoryItems(items);
         
-        // Set default selected item if inventory exists
         if (items.length > 0) setSelectedItem(items[0]._id);
       } catch (err) {
         alert("⚠️ Error loading prices. Check server.");
@@ -43,15 +43,13 @@ const OrderForm = () => {
     fetchData();
   }, []);
 
-  // 4. EFFECT: Auto-Calculate Price whenever inputs change
+  // 4. EFFECT: Auto-Calculate Price
   useEffect(() => {
-    if (!rates) return; // Wait until rates are loaded
+    if (!rates) return;
 
     let servicePrice = 0;
 
-    // 1. Calculate Service Cost
     if (formData.serviceType === 'Full-Service') {
-      // Logic: Max(Weight, MinWeight) * PricePerKg
       const weightToCharge = Math.max(formData.weight || 0, rates.minWeight);
       servicePrice = weightToCharge * rates.fullServicePerKg;
     } else {
@@ -60,10 +58,7 @@ const OrderForm = () => {
         (formData.dryCount * rates.selfServiceDry);
     }
 
-    // 2. Calculate Add-ons Cost
     const addOnsTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-    // 3. Final Total
     const finalPrice = servicePrice + addOnsTotal;
 
     setFormData(prev => {
@@ -82,7 +77,6 @@ const OrderForm = () => {
   };
 
   const addToCart = () => {
-    // Find the full item object from the ID
     const product = inventoryItems.find(i => i._id === selectedItem);
     if (!product) return;
 
@@ -93,25 +87,20 @@ const OrderForm = () => {
       quantity: parseInt(itemQuantity)
     };
 
-    // Add to cart array
     setCart([...cart, newItem]);
   };
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // 1. Send data and CAPTURE the result (we need the 'response' variable)
       const response = await orderService.createOrder({ ...formData, addOns: cart });
       
       alert("✅ Order Created Successfully!");
 
-      // 2. INSERT PRINT LOGIC HERE
-      // We use 'response' because it contains the Date and Order ID from the database
       if(window.confirm("Do you want to print the receipt now?")) {
          printReceipt(response); 
       }
 
-      // 3. Reload the page
       window.location.reload(); 
     } catch (err) {
       alert("❌ Error: " + (err.response?.data?.message || err.message));
@@ -129,7 +118,30 @@ const handleSubmit = async (e) => {
         {/* CUSTOMER INFO */}
         <div style={{ marginBottom: '10px' }}>
           <label>Customer Name:</label><br/>
-          <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} required style={{ width: '100%', padding: '8px' }}/>
+          <input 
+            type="text" 
+            name="customerName" 
+            value={formData.customerName} 
+            onChange={handleChange} 
+            required 
+            style={{ width: '100%', padding: '8px' }}
+          />
+        </div>
+
+        {/* PHONE NUMBER - NEW */}
+        <div style={{ marginBottom: '10px' }}>
+          <label>Phone Number (for customer linking):</label><br/>
+          <input 
+            type="tel" 
+            name="customerPhone" 
+            value={formData.customerPhone} 
+            onChange={handleChange} 
+            placeholder="e.g. 09123456789"
+            style={{ width: '100%', padding: '8px' }}
+          />
+          <small style={{ color: '#666', fontSize: '12px' }}>
+            If customer has an account, order will be linked automatically
+          </small>
         </div>
 
         {/* Service Type */}
@@ -160,9 +172,9 @@ const handleSubmit = async (e) => {
           </div>
         )}
 
-        {/* --- ADD-ONS SECTION (NEW) --- */}
+        {/* ADD-ONS SECTION */}
         <div style={{ background: '#fff', padding: '10px', borderRadius: '5px', marginBottom: '10px', border: '1px solid #ddd' }}>
-          <h4>🛍️ Add-ons (Detergents, etc.)</h4>
+          <h4>🛒 Add-ons (Detergents, etc.)</h4>
           
           <div style={{ display: 'flex', gap: '5px' }}>
             <select 
@@ -190,7 +202,6 @@ const handleSubmit = async (e) => {
             </button>
           </div>
 
-          {/* List of selected items */}
           {cart.length > 0 && (
             <ul style={{ marginTop: '10px', fontSize: '14px', color: '#555' }}>
               {cart.map((item, index) => (
@@ -201,7 +212,6 @@ const handleSubmit = async (e) => {
             </ul>
           )}
         </div>
-        {/* ----------------------------- */}
 
         {/* TOTAL & SUBMIT */}
         <div style={{ marginBottom: '15px' }}>

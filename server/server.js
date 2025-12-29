@@ -1,8 +1,10 @@
-// 1. IMPORTS
-const express = require('express'); // the main framework
-const dotenv = require('dotenv');   // to read the .env file
-const cors = require('cors');       // to allow the frontend to talk to this server 
-const connectDB = require('./config/db'); //import the file
+// server/server.js
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const connectDB = require('./config/db');
+
+// Import Route Files
 const userRoutes = require('./routes/userRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const settingRoutes = require('./routes/settingRoutes');
@@ -10,39 +12,60 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 const machineRoutes = require('./routes/machineRoutes');
 const authRoutes = require('./routes/authRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
+const customerRoutes = require('./routes/customerRoutes'); // NEW
 
-// 2. CONFIGURATION
-dotenv.config(); //load the variables from .env (like PORT=5000)
+// Configuration
+dotenv.config();
+connectDB();
 
-//Connect to database
-connectDB(); //run the function
-
-// 3. INITIALIZE APP 
+// Initialize App
 const app = express();
 
-// 4. MIDDLEWARE (The Gatekeepers)
-// This line allows your server to understand JSON data sent from the frontend.
-// Without this, if you send { name: "John" }, the server sees 'undefined'.
+// Middleware
 app.use(express.json());
 app.use(cors());
 
-//  USE THE ROUTES
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/attendance', attendanceRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/settings', settingRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/machines', machineRoutes);
+// ============================================
+// API ROUTES
+// ============================================
 
-// 5. TEST ROUTE 
+// Public Routes (No auth required)
+app.use('/api/auth', authRoutes); // Login for all users
+app.use('/api/customers', customerRoutes); // Customer registration & portal
+
+// Protected Routes (Auth required, role-specific)
+app.use('/api/users', userRoutes); // Admin only
+app.use('/api/attendance', attendanceRoutes); // Staff only
+app.use('/api/orders', orderRoutes); // Staff/Admin
+app.use('/api/settings', settingRoutes); // View: Staff, Edit: Admin
+app.use('/api/inventory', inventoryRoutes); // View: Staff, Edit: Admin
+app.use('/api/machines', machineRoutes); // Staff/Admin
+
+// ============================================
+// TEST ROUTE
+// ============================================
 app.get('/', (req, res) => {
-res.send('API is running.....');
+  res.json({ 
+    message: 'M-Laundromat API',
+    version: '2.0',
+    roles: ['admin', 'staff', 'customer']
+  });
 });
 
-// 6. START SERVER
-const PORT = process.env.PORT || 5000;
+// ============================================
+// ERROR HANDLER (Optional but recommended)
+// ============================================
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : {}
+  });
+});
 
+// Start Server
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📌 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

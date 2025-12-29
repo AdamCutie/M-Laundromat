@@ -1,153 +1,204 @@
+// server/controllers/orderController.js
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Inventory = require('../models/Inventory');
+const User = require('../models/User');
 
-// @desc    Create a new order & Deduct Inventory (Atomic Transaction)
-// @route   POST /api/orders
-// @access  Staff/Admin
+// ============================================
+// CREATE ORDER (Staff/Admin)
+// ============================================
 const createOrder = async (req, res) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    try {
-        const {
-            customerName,
-            serviceType,
-            weight,
-            washCount,
-            dryCount,
-            totalPrice,
-            addOns
-        } = req.body;
+  try {
+    const {
+      customerName,
+      customerPhone, // NEW: Can search for existing customer
+      serviceType,
+      weight,
+      washCount,
+      dryCount,
+      totalPrice,
+      addOns
+    } = req.body;
 
-        // 1. Basic Validation
-        if (!customerName || !serviceType || totalPrice === undefined) {
-            throw new Error("Please fill in all required fields");
-        }
-
-        // 2. Handle Inventory Deduction (Atomic Check)
-        // If order has add-ons, verify stock and deduct within the session
-        if (addOns && addOns.length > 0) {
-            for (const item of addOns) {
-                // Find and update in one go to prevent race conditions
-                const product = await Inventory.findOneAndUpdate(
-                    { _id: item.itemId, stockLevel: { $gte: item.quantity } }, // Filter: Must have enough stock
-                    { $inc: { stockLevel: -item.quantity } }, // Update: Decrease stock
-                    { new: true, session } // Options: Use this transaction session
-                );
-
-                if (!product) {
-                    // If product is null, it means either it doesn't exist OR stock was too low
-                    throw new Error(`Insufficient stock or invalid item for item ID: ${item.itemId}`);
-                }
-            }
-        }
-
-        // 3. Create the Order
-        const newOrder = await Order.create([{
-            customerName,
-            serviceType,
-            weight,
-            washCount,
-            dryCount,
-            totalPrice,
-            addOns: addOns || [],
-            status: 'Pending'
-        }], { session });
-
-        // 4. Commit Transaction
-        // If we get here, everything is good. Save changes to DB.
-        await session.commitTransaction();
-        session.endSession();
-
-        res.status(201).json(newOrder[0]); // Order.create returns an array when using sessions
-
-    } catch (error) {
-        // 5. Rollback on Error
-        // If anything failed above (low stock, DB error), undo ALL changes
-        await session.abortTransaction();
-        session.endSession();
-        
-        console.error("Order Transaction Failed:", error.message);
-        
-        // Return readable error message to frontend
-        const statusCode = error.message.includes("Insufficient stock") ? 400 : 500;
-        res.status(statusCode).json({ message: error.message || "Server Error: Could not create order" });
+    // 1. Validation
+    if (!customerName || !serviceType || totalPrice === undefined) {
+      throw new Error("Please fill in all required fields");
     }
-};
 
-// @desc    Get all orders
-// @route   GET /api/orders
-const getAllOrders = async (req, res) => {
-    try {
-        const orders = await Order.find().sort({ createdAt: -1 });
-        res.status(200).json(orders);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    // 2. Try to find existing customer by phone or name
+    let customerId = null;
+    if (customerPhone) {
+      const existingCustomer = await User.findOne({ 
+        phoneNumber: customerPhone,
+        role: 'customer'
+      });
+      if (existingCustomer) {
+        customerId = existingCustomer._id;
+      }
     }
-};
 
-// @desc    Get Order Stats
-// @route   GET /api/orders/stats
-const getOrderStats = async (req, res) => {
-    try {
-        // Parallel execution for faster stats
-        const [revenueStats, statusStats] = await Promise.all([
-            Order.aggregate([
-                {
-                    $group: {
-                        _id: null,
-                        totalRevenue: { $sum: "$totalPrice" },
-                        totalOrders: { $sum: 1 },
-                        avgOrderValue: { $avg: "$totalPrice" }
-                    }
-                }
-            ]),
-            Order.aggregate([
-                { $group: { _id: "$status", count: { $sum: 1 } } }
-            ])
-        ]);
-
-        res.status(200).json({
-            revenue: revenueStats[0]?.totalRevenue || 0,
-            count: revenueStats[0]?.totalOrders || 0,
-            breakdown: statusStats
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// @desc    Update Order Status
-// @route   PUT /api/orders/:id
-const updateOrderStatus = async (req, res) => {
-    try {
-        const { status } = req.body;
-        
-        const updates = { status };
-        if (status === 'Completed') {
-            updates.completedAt = new Date();
-        }
-
-        const updatedOrder = await Order.findByIdAndUpdate(
-            req.params.id,
-            { $set: updates },
-            { new: true } // Return the updated document
+    // 3. Handle Inventory Deduction
+    if (addOns && addOns.length > 0) {
+      for (const item of addOns) {
+        const product = await Inventory.findOneAndUpdate(
+          { 
+            _id: item.itemId, 
+            stockLevel: { $gte: item.quantity } 
+          },
+          { $inc: { stockLevel: -item.quantity } },
+          { new: true, session }
         );
 
-        if (!updatedOrder) {
-            return res.status(404).json({ message: "Order not found" });
+        if (!product) {
+          throw new Error(`Insufficient stock for: ${item.itemName}`);
         }
-
-        res.status(200).json(updatedOrder);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+      }
     }
+
+    // 4. Create the Order
+    const newOrder = await Order.create([{
+      customerName,
+      customerId, // Link to customer account if found
+      phoneNumber: customerPhone || '',
+      serviceType,
+      weight,
+      washCount,
+      dryCount,
+      totalPrice,
+      addOns: addOns || [],
+      status: 'Pending',
+      createdBy: req.user._id // Track which staff created this
+    }], { session });
+
+    // 5. Commit Transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json(newOrder[0]);
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    
+    console.error("Order Creation Failed:", error.message);
+    const statusCode = error.message.includes("Insufficient stock") ? 400 : 500;
+    res.status(statusCode).json({ message: error.message });
+  }
 };
 
+// ============================================
+// GET ALL ORDERS (Admin/Staff View)
+// ============================================
+const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate('customerId', 'username email phoneNumber')
+      .populate('createdBy', 'username')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ============================================
+// GET ORDER STATS (Admin Only)
+// ============================================
+const getOrderStats = async (req, res) => {
+  try {
+    const [revenueStats, statusStats] = await Promise.all([
+      Order.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: "$totalPrice" },
+            totalOrders: { $sum: 1 },
+            avgOrderValue: { $avg: "$totalPrice" }
+          }
+        }
+      ]),
+      Order.aggregate([
+        { $group: { _id: "$status", count: { $sum: 1 } } }
+      ])
+    ]);
+
+    res.status(200).json({
+      revenue: revenueStats[0]?.totalRevenue || 0,
+      count: revenueStats[0]?.totalOrders || 0,
+      avgValue: revenueStats[0]?.avgOrderValue || 0,
+      breakdown: statusStats
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ============================================
+// UPDATE ORDER STATUS (Staff/Admin)
+// ============================================
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    
+    const updates = { status };
+    
+    // Track completion time
+    if (status === 'Completed' || status === 'Claimed') {
+      updates.completedAt = new Date();
+    }
+
+    const updatedOrder = await Order.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
+      { new: true }
+    ).populate('customerId', 'username email');
+
+    if (!updatedOrder) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.status(200).json(updatedOrder);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ============================================
+// GET CUSTOMER'S ORDERS (Customer View)
+// ============================================
+const getCustomerOrders = async (req, res) => {
+  try {
+    // This route is called by customers to see their own orders
+    const orders = await Order.find({ 
+      customerId: req.user._id 
+    })
+    .sort({ createdAt: -1 })
+    .select('-createdBy'); // Don't expose which staff created it
+
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ============================================
+// EXPLANATION:
+// ============================================
+// Key Features:
+// 1. Auto-links orders to customer accounts when phone number matches
+// 2. Tracks which staff member created each order
+// 3. Separate endpoints for staff view (all orders) vs customer view (my orders)
+// 4. Maintains transaction safety for inventory deduction
+// 5. Populates related data (customer info, staff info) for better reporting
+
 module.exports = {
-    createOrder,
-    getAllOrders,
-    getOrderStats,
-    updateOrderStatus
+  createOrder,
+  getAllOrders,
+  getOrderStats,
+  updateOrderStatus,
+  getCustomerOrders
 };

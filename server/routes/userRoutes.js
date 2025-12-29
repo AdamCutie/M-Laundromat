@@ -1,11 +1,12 @@
+// server/routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
 const { getAllUsers, registerUser, deleteUser } = require('../controllers/authController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, adminOnly } = require('../middleware/authMiddleware');
 
-// These routes match /api/users
-router.get('/', protect, admin, getAllUsers);
-router.post('/', protect, admin, registerUser);
-router.delete('/:id', protect, admin, deleteUser);
+// Admin only routes for managing staff
+router.get('/', protect, adminOnly, getAllUsers);
+router.post('/', protect, adminOnly, registerUser);
+router.delete('/:id', protect, adminOnly, deleteUser);
 
 module.exports = router;
