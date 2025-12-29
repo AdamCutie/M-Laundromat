@@ -1,4 +1,3 @@
-// client/src/components/Login.js
 import React, { useState, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
 import api from '../services/api';
@@ -7,452 +6,92 @@ const Login = () => {
   const { login } = useContext(AuthContext);
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState('');
-  
-  // Login Form Data
-  const [loginData, setLoginData] = useState({ 
-    username: '', 
-    password: '' 
-  });
-  
-  // Registration Form Data
-  const [registerData, setRegisterData] = useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phoneNumber: '',
-    address: ''
-  });
+  const [formData, setFormData] = useState({ username: '', password: '', email: '', role: 'customer' });
 
-  // ============================================
-  // LOGIN HANDLER
-  // ============================================
-  const handleLogin = async (e) => {
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    const endpoint = isRegistering ? '/customers/register' : '/auth/login';
     
     try {
-      const response = await api.post('/auth/login', loginData);
-      const userData = response.data;
-      
-      login(userData, userData.token);
-      
+      const res = await api.post(endpoint, formData);
+      login(res.data, res.data.token);
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-    }
-  };
-
-  // ============================================
-  // REGISTRATION HANDLER
-  // ============================================
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    // Validation
-    if (registerData.password !== registerData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (registerData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
-    try {
-      const response = await api.post('/customers/register', {
-        username: registerData.username,
-        email: registerData.email,
-        password: registerData.password,
-        phoneNumber: registerData.phoneNumber,
-        address: registerData.address
-      });
-
-      const userData = response.data;
-      
-      // Auto-login after successful registration
-      login(userData, userData.token);
-      
-    } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || 'Authentication failed');
     }
   };
 
   return (
     <div style={{ 
-      height: '100vh', 
+      minHeight: '100vh', 
       display: 'flex', 
-      justifyContent: 'center', 
       alignItems: 'center', 
-      backgroundColor: '#e3f2fd',
-      backgroundImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      justifyContent: 'center', 
+      background: 'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)', // Brand Gradient
+      padding: '20px'
     }}>
-      <div style={{ 
-        padding: '40px', 
-        background: 'white', 
-        borderRadius: '15px', 
-        boxShadow: '0 10px 40px rgba(0,0,0,0.2)', 
-        width: '400px',
-        maxWidth: '90%'
+      <div className="card" style={{ 
+        width: '100%', 
+        maxWidth: '400px', 
+        background: 'rgba(255, 255, 255, 0.95)', // Slight transparency
+        backdropFilter: 'blur(10px)',
+        padding: '2.5rem'
       }}>
         
-        {/* Logo/Header */}
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h1 style={{ 
-            margin: '0 0 5px 0', 
-            color: '#667eea',
-            fontSize: '32px'
-          }}>
-            🌊 M-Laundromat
-          </h1>
-          <p style={{ 
-            margin: 0, 
-            color: '#666',
-            fontSize: '14px'
-          }}>
-            {isRegistering ? 'Create your account' : 'Welcome back'}
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌊</div>
+          <h1 style={{ margin: 0, fontSize: '1.75rem', color: 'var(--text-main)' }}>M-Laundromat</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>
+            {isRegistering ? 'Create your account' : 'Welcome back, please sign in.'}
           </p>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div style={{ 
-            padding: '12px', 
-            backgroundColor: '#f8d7da', 
-            color: '#721c24',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            fontSize: '14px',
-            textAlign: 'center'
+            background: 'var(--danger-bg)', color: 'var(--danger-text)', 
+            padding: '10px', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.875rem' 
           }}>
-            {error}
+            ⚠️ {error}
           </div>
         )}
 
-        {/* ============================================ */}
-        {/* LOGIN FORM */}
-        {/* ============================================ */}
-        {!isRegistering ? (
-          <form onSubmit={handleLogin}>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px',
-                fontWeight: '500',
-                color: '#333'
-              }}>
-                Username
-              </label>
-              <input 
-                type="text" 
-                value={loginData.username}
-                onChange={(e) => setLoginData({
-                  ...loginData, 
-                  username: e.target.value
-                })}
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-                required 
-                placeholder="Enter your username"
-              />
-            </div>
+        <form onSubmit={handleSubmit}>
+          <div className="input-group">
+            <label className="label">Username</label>
+            <input name="username" className="input" onChange={handleChange} required placeholder="Enter username" />
+          </div>
 
-            <div style={{ marginBottom: '25px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '8px',
-                fontWeight: '500',
-                color: '#333'
-              }}>
-                Password
-              </label>
-              <input 
-                type="password" 
-                value={loginData.password}
-                onChange={(e) => setLoginData({
-                  ...loginData, 
-                  password: e.target.value
-                })}
-                style={{ 
-                  width: '100%', 
-                  padding: '12px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-                required 
-                placeholder="Enter your password"
-              />
-            </div>
+          {isRegistering && (
+             <div className="input-group">
+               <label className="label">Email Address</label>
+               <input name="email" type="email" className="input" onChange={handleChange} placeholder="name@example.com" />
+             </div>
+          )}
 
-            <button 
-              type="submit" 
-              style={{ 
-                width: '100%', 
-                padding: '14px', 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white', 
-                border: 'none', 
-                borderRadius: '8px', 
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                marginBottom: '15px'
-              }}
-            >
-              Sign In
-            </button>
+          <div className="input-group">
+            <label className="label">Password</label>
+            <input name="password" type="password" className="input" onChange={handleChange} required placeholder="••••••••" />
+          </div>
 
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ color: '#666', fontSize: '14px' }}>
-                Don't have an account?{' '}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsRegistering(true);
-                  setError('');
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#667eea',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '14px'
-                }}
-              >
-                Register here
-              </button>
-            </div>
-          </form>
-        ) : (
-          
-          /* ============================================ */
-          /* REGISTRATION FORM */
-          /* ============================================ */
-          <form onSubmit={handleRegister}>
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '5px',
-                fontSize: '13px',
-                fontWeight: '500'
-              }}>
-                Username *
-              </label>
-              <input 
-                type="text" 
-                value={registerData.username}
-                onChange={(e) => setRegisterData({
-                  ...registerData, 
-                  username: e.target.value
-                })}
-                style={{ 
-                  width: '100%', 
-                  padding: '10px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-                required 
-                placeholder="Choose a username"
-              />
-            </div>
+          <button type="submit" className="btn btn-primary btn-block" style={{ marginTop: '1rem', padding: '0.75rem' }}>
+            {isRegistering ? 'Create Account' : 'Sign In'}
+          </button>
+        </form>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '5px',
-                fontSize: '13px',
-                fontWeight: '500'
-              }}>
-                Email
-              </label>
-              <input 
-                type="email" 
-                value={registerData.email}
-                onChange={(e) => setRegisterData({
-                  ...registerData, 
-                  email: e.target.value
-                })}
-                style={{ 
-                  width: '100%', 
-                  padding: '10px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-                placeholder="your@email.com"
-              />
-            </div>
+        <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
+          <span style={{ color: 'var(--text-secondary)' }}>
+            {isRegistering ? 'Already have an account?' : "Don't have an account?"}
+          </span>
+          <button 
+            onClick={() => setIsRegistering(!isRegistering)} 
+            style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer', marginLeft: '5px' }}
+          >
+            {isRegistering ? 'Sign In' : 'Register Now'}
+          </button>
+        </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '5px',
-                fontSize: '13px',
-                fontWeight: '500'
-              }}>
-                Phone Number
-              </label>
-              <input 
-                type="tel" 
-                value={registerData.phoneNumber}
-                onChange={(e) => setRegisterData({
-                  ...registerData, 
-                  phoneNumber: e.target.value
-                })}
-                style={{ 
-                  width: '100%', 
-                  padding: '10px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-                placeholder="0912-345-6789"
-              />
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '5px',
-                fontSize: '13px',
-                fontWeight: '500'
-              }}>
-                Address
-              </label>
-              <input 
-                type="text" 
-                value={registerData.address}
-                onChange={(e) => setRegisterData({
-                  ...registerData, 
-                  address: e.target.value
-                })}
-                style={{ 
-                  width: '100%', 
-                  padding: '10px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-                placeholder="Your address"
-              />
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '5px',
-                fontSize: '13px',
-                fontWeight: '500'
-              }}>
-                Password *
-              </label>
-              <input 
-                type="password" 
-                value={registerData.password}
-                onChange={(e) => setRegisterData({
-                  ...registerData, 
-                  password: e.target.value
-                })}
-                style={{ 
-                  width: '100%', 
-                  padding: '10px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-                required 
-                placeholder="At least 6 characters"
-              />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ 
-                display: 'block', 
-                marginBottom: '5px',
-                fontSize: '13px',
-                fontWeight: '500'
-              }}>
-                Confirm Password *
-              </label>
-              <input 
-                type="password" 
-                value={registerData.confirmPassword}
-                onChange={(e) => setRegisterData({
-                  ...registerData, 
-                  confirmPassword: e.target.value
-                })}
-                style={{ 
-                  width: '100%', 
-                  padding: '10px',
-                  border: '2px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-                required 
-                placeholder="Re-enter password"
-              />
-            </div>
-
-            <button 
-              type="submit" 
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white', 
-                border: 'none', 
-                borderRadius: '8px', 
-                cursor: 'pointer',
-                fontSize: '15px',
-                fontWeight: 'bold',
-                marginBottom: '12px'
-              }}
-            >
-              Create Account
-            </button>
-
-            <div style={{ textAlign: 'center' }}>
-              <span style={{ color: '#666', fontSize: '13px' }}>
-                Already have an account?{' '}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsRegistering(false);
-                  setError('');
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#667eea',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '13px'
-                }}
-              >
-                Sign in
-              </button>
-            </div>
-          </form>
-        )}
       </div>
     </div>
   );
