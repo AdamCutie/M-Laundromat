@@ -4,7 +4,8 @@ const router = express.Router();
 const { 
   getInventory, 
   addInventoryItem, 
-  updateInventoryItem 
+  updateInventoryItem,
+  deleteInventoryItem
 } = require('../controllers/inventoryController');
 const { protect, staffOrAdmin, adminOnly } = require('../middleware/authMiddleware');
 
@@ -12,5 +13,6 @@ const { protect, staffOrAdmin, adminOnly } = require('../middleware/authMiddlewa
 router.get('/', protect, staffOrAdmin, getInventory);
 router.post('/', protect, adminOnly, addInventoryItem);
 router.patch('/:id', protect, adminOnly, updateInventoryItem);
+router.delete('/:id', protect, adminOnly, deleteInventoryItem);
 
 module.exports = router;

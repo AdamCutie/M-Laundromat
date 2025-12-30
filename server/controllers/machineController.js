@@ -25,6 +25,36 @@ const getMachines = async (req, res) => {
   }
 };
 
+// @desc    Add a new machine
+// @route   POST /api/machines
+const addMachine = async (req, res) => {
+  try {
+    const { machineNumber, type } = req.body;
+
+    // 1. Validation
+    if (!machineNumber || !type) {
+      return res.status(400).json({ message: "Machine Number and Type are required" });
+    }
+
+    // 2. Check for duplicates
+    const machineExists = await Machine.findOne({ machineNumber });
+    if (machineExists) {
+      return res.status(400).json({ message: "Machine Number already exists" });
+    }
+
+    // 3. Create Machine
+    const machine = await Machine.create({
+      machineNumber,
+      type,
+      status: 'Available' // Default status
+    });
+
+    res.status(201).json(machine);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Update machine status (Start/Stop)
 // @route   PUT /api/machines/:id
 const updateMachineStatus = async (req, res) => {
@@ -58,5 +88,22 @@ const updateMachineStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// @desc    Delete a machine
+// @route   DELETE /api/machines/:id
+const deleteMachine = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const machine = await Machine.findByIdAndDelete(id);
 
-module.exports = { getMachines, updateMachineStatus };
+    if (!machine) {
+      return res.status(404).json({ message: "Machine not found" });
+    }
+
+    res.status(200).json({ id: id, message: "Machine deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { getMachines, updateMachineStatus, addMachine, deleteMachine };

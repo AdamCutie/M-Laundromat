@@ -17,6 +17,10 @@ const inventoryService = {
   update: async (id, data) => {
     const response = await api.patch(`/inventory/${id}`, data);
     return response.data;
+  },
+  deleteItem: async (id, data) => {
+  const response = await api.delete(`/inventory/${id}`, data);
+  return response.data;
   }
 };
 

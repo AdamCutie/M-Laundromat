@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom'; // ✅ Added for navigation
 import AdminLayout from '../../components/AdminLayout';
 import orderService from '../../services/orderService';
 import machineService from '../../services/machineService';
@@ -8,10 +9,13 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 
-// Metric Card Component
-function MetricCard({ title, value, subtext, isPositive, icon: Icon, iconBg, iconColor }) {
+// Metric Card Component (Refactored to support onClick)
+function MetricCard({ title, value, subtext, isPositive, icon: Icon, iconBg, iconColor, onClick }) {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
+    <div 
+      onClick={onClick}
+      className={`bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md ${onClick ? 'cursor-pointer hover:border-blue-300' : ''}`}
+    >
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${iconBg}`}>
           <Icon className={`w-6 h-6 ${iconColor}`} />
@@ -30,10 +34,11 @@ function MetricCard({ title, value, subtext, isPositive, icon: Icon, iconBg, ico
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function Dashboard({ user, onLogout }) {
+  const navigate = useNavigate(); // ✅ Hook for navigation
   const [orders, setOrders] = useState([]);
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState('This Month'); // Default to Today
+  const [dateRange, setDateRange] = useState('Today'); // Default is Today
 
   useEffect(() => {
     const fetchData = async () => {
@@ -162,6 +167,7 @@ export default function Dashboard({ user, onLogout }) {
           icon={DollarSign}
           iconBg="bg-green-100"
           iconColor="text-green-600"
+          onClick={() => navigate('/admin/reports')} // ✅ Clickable Link
         />
         <MetricCard
           title="Orders"
@@ -180,6 +186,7 @@ export default function Dashboard({ user, onLogout }) {
           icon={Boxes}
           iconBg="bg-purple-100"
           iconColor="text-purple-600"
+          onClick={() => navigate('/admin/machines')} // ✅ Clickable Link
         />
         <MetricCard
           title="Avg Order Value"

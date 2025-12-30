@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import inventoryService from '../../services/inventoryService';
-import { Plus, Package, AlertTriangle, Search, Save, X } from 'lucide-react';
+import { Plus, Package, AlertTriangle, Search, Save, X, Trash2 } from 'lucide-react'; // Added Trash2 here
 
 export default function Inventory({ user, onLogout }) {
   const [inventory, setInventory] = useState([]);
@@ -64,6 +64,17 @@ export default function Inventory({ user, onLogout }) {
       fetchInventory();
     } catch (err) {
       alert("Error adding item: " + err.response?.data?.message);
+    }
+  };
+
+  const handleDeleteItem = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
+    
+    try {
+      await inventoryService.deleteItem(id);
+      setInventory(prev => prev.filter(item => item._id !== id)); // Optimistic UI update
+    } catch (err) {
+      alert("Failed to delete item.");
     }
   };
 
@@ -149,12 +160,19 @@ export default function Inventory({ user, onLogout }) {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right flex justify-end items-center gap-3">
                       <button 
                         onClick={() => handleRestock(item)}
                         className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         Restock
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteItem(item._id, item.itemName)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Item"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </td>
                   </tr>

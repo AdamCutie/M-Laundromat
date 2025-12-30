@@ -12,7 +12,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 export default function Reports({ user, onLogout }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState('Today');
+  const [dateRange, setDateRange] = useState('This Week');
 
   useEffect(() => {
     fetchData();
