@@ -17,12 +17,12 @@ const machineService = {
     const response = await api.put(`/machines/${id}`, data);
     return response.data;
   },
-  addMachine: async (id, data) => {
-    const response = await api.post(`/machines/${id}`, data);
+  addMachine: async (data) => {
+    const response = await api.post('/machines', data);
     return response.data;
   },
-  deleteMachine: async (id, data) => {
-    const response = await api.delete(`/machines/${id}`, data);
+  deleteMachine: async (id) => {
+    const response = await api.delete(`/machines/${id}`);
     return response.data;
   }
 };
