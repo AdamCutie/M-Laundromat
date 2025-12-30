@@ -18,7 +18,30 @@ const getMachines = async (req, res) => {
       ];
       machines = await Machine.insertMany(defaultMachines);
     }
+    // Check every machine. If it's "In Use" but the time has passed, reset it.
+    const now = new Date();
+    let updatesMade = false;
 
+    for (const machine of machines) {
+      // If machine is running AND the end time has passed
+      if (machine.status === 'In Use' && machine.endTime && new Date(machine.endTime) <= now) {
+        
+        // Reset to Available
+        machine.status = 'Available';
+        machine.startTime = null;
+        machine.endTime = null;
+        machine.currentOrderId = null;
+        
+        await machine.save(); // Save to DB
+        updatesMade = true;
+      }
+    }
+
+    // If we updated any machines, refetch the fresh list to ensure UI is perfect
+    if (updatesMade) {
+      machines = await Machine.find().sort({ machineNumber: 1 });
+    }
+    
     res.status(200).json(machines);
   } catch (error) {
     res.status(500).json({ message: error.message });

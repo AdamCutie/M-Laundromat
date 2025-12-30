@@ -3,8 +3,8 @@ import AdminLayout from '../../components/AdminLayout';
 import machineService from '../../services/machineService';
 import { Plus, Circle, WashingMachine, Power, Wrench, CheckCircle, Clock, Save, X, Trash2 } from 'lucide-react';
 
-// ✅ TIMER COMPONENT (Refactored for safety)
-function Timer({ startTime }) {
+// ✅ TIMER COMPONENT
+function Timer({ startTime, onComplete }) {
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
@@ -20,7 +20,9 @@ function Timer({ startTime }) {
       const diff = end - now;
 
       if (diff <= 0) {
-        setTimeLeft('Cycle Complete');
+        setTimeLeft('Finishing...');
+        // ✅ Trigger the auto-finish logic
+        if (onComplete) onComplete();
       } else {
         const minutes = Math.floor((diff / 1000 / 60) % 60);
         const seconds = Math.floor((diff / 1000) % 60);
@@ -29,9 +31,9 @@ function Timer({ startTime }) {
     };
 
     calculateTime();
-    const interval = setInterval(calculateTime, 1000);
+    const interval = setInterval(calculateTime, 1000); // Update every second
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, [startTime, onComplete]); 
 
   return (
     <div className="flex items-center justify-center gap-2 text-blue-600 font-bold font-mono text-lg">
@@ -92,7 +94,7 @@ export default function Machines({ user, onLogout }) {
     }
   };
 
-  // ✅ ADD MACHINE FUNCTION (Refactored Error Handling)
+  // ✅ ADD MACHINE FUNCTION
   const handleAddMachine = async (e) => {
     e.preventDefault();
     try {
@@ -107,7 +109,7 @@ export default function Machines({ user, onLogout }) {
       setNewMachine({ machineNumber: '', type: 'Washer' });
       fetchMachines();
     } catch (err) {
-      // Use the actual error from the backend (e.g., "Machine Number already exists")
+      // ✅ FIXED: Show the actual error from backend (e.g. Missing fields vs Duplicate)
       alert(err.response?.data?.message || "Error adding machine");
     }
   };
@@ -182,7 +184,7 @@ export default function Machines({ user, onLogout }) {
           return (
             <div key={machine._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md flex flex-col justify-between relative group">
               
-              {/* DELETE BUTTON (Absolute Positioned) */}
+              {/* DELETE BUTTON */}
               <button 
                 onClick={() => handleDeleteMachine(machine._id, machine.machineNumber, machine.status)}
                 className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
@@ -221,7 +223,11 @@ export default function Machines({ user, onLogout }) {
                   {isInUse ? (
                      <div className="text-center w-full">
                        <span className="text-xs font-bold text-blue-600 uppercase tracking-wide block mb-2">Cycle In Progress</span>
-                       <Timer startTime={machine.startTime} />
+                       {/* ✅ FIXED: Passed fetchMachines so the page updates when time is up */}
+                       <Timer 
+                         startTime={machine.startTime} 
+                         onComplete={() => fetchMachines()} 
+                       />
                      </div>
                   ) : isMaintenance ? (
                       <div className="text-center">
