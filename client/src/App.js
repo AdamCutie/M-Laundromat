@@ -18,8 +18,10 @@ import StaffPOS from './pages/staff/POS';
 import StaffOrders from './pages/staff/Orders';
 import StaffLayout from './components/StaffLayout';
 
-// Customer Pages (Placeholder)
-const CustomerDashboard = () => <div>Customer Dashboard (Refactor Pending)</div>;
+// Customer Pages 
+import CustomerDashboard from './pages/customer/Dashboard';
+import CustomerOrders from './pages/customer/Orders';
+import CustomerProfile from './pages/customer/Profile';
 
 function AppRoutes() {
   const { user, loading, logout } = useContext(AuthContext);
@@ -68,8 +70,16 @@ function AppRoutes() {
         user?.role === 'staff' ? <AdminMachines user={user} onLogout={logout} Layout={StaffLayout} /> : <Navigate to="/" />
       } />
 
-      {/* --- CUSTOMER ROUTES --- */}
-      <Route path="/customer/dashboard" element={<CustomerDashboard />} />
+      {/* --- ✅ CUSTOMER ROUTES --- */}
+      <Route path="/customer/dashboard" element={
+        user?.role === 'customer' ? <CustomerDashboard user={user} onLogout={logout} /> : <Navigate to="/" />
+      } />
+      <Route path="/customer/orders" element={
+        user?.role === 'customer' ? <CustomerOrders user={user} onLogout={logout} /> : <Navigate to="/" />
+      } />
+      <Route path="/customer/profile" element={
+        user?.role === 'customer' ? <CustomerProfile user={user} onLogout={logout} /> : <Navigate to="/" />
+      } />
     </Routes>
   );
 }
