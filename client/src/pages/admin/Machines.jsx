@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from '../../components/AdminLayout';
+import AdminLayout from '../../components/AdminLayout'; // Default fallback
 import machineService from '../../services/machineService';
 import { Plus, Circle, WashingMachine, Power, Wrench, CheckCircle, Clock, Save, X, Trash2 } from 'lucide-react';
 
@@ -43,7 +43,8 @@ function Timer({ startTime, onComplete }) {
   );
 }
 
-export default function Machines({ user, onLogout }) {
+// ✅ UPDATED: Accept 'Layout' prop. Defaults to AdminLayout if not passed.
+export default function Machines({ user, onLogout, Layout = AdminLayout }) {
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -138,8 +139,9 @@ export default function Machines({ user, onLogout }) {
 
   if (loading) return <div className="p-10 text-center">Loading Machines...</div>;
 
+  // ✅ USE DYNAMIC LAYOUT
   return (
-    <AdminLayout user={user} onLogout={onLogout}>
+    <Layout user={user} onLogout={onLogout}>
       {/* Header Stats */}
       <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full md:w-auto">
@@ -165,13 +167,16 @@ export default function Machines({ user, onLogout }) {
           </div>
         </div>
         
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          <span className="hidden sm:inline">Add Machine</span>
-        </button>
+        {/* Hide Add Button for Staff (Only show if user is admin) */}
+        {user.role === 'admin' && (
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="hidden sm:inline">Add Machine</span>
+          </button>
+        )}
       </div>
 
       {/* Machines Grid */}
@@ -184,14 +189,16 @@ export default function Machines({ user, onLogout }) {
           return (
             <div key={machine._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md flex flex-col justify-between relative group">
               
-              {/* DELETE BUTTON */}
-              <button 
-                onClick={() => handleDeleteMachine(machine._id, machine.machineNumber, machine.status)}
-                className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
-                title="Delete Machine"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {/* Only Admin can Delete */}
+              {user.role === 'admin' && (
+                <button 
+                  onClick={() => handleDeleteMachine(machine._id, machine.machineNumber, machine.status)}
+                  className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
+                  title="Delete Machine"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
 
               {/* Card Top: Info */}
               <div>
@@ -330,6 +337,6 @@ export default function Machines({ user, onLogout }) {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </Layout>
   );
 }
