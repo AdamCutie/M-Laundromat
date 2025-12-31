@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout'; // Default fallback
 import machineService from '../../services/machineService';
 import LoadingScreen from '../../components/LoadingScreen';
-import { Plus, Circle, WashingMachine, Power, Wrench, CheckCircle, Clock, Save, X, Trash2 } from 'lucide-react';
+// Added Wind icon for Dryer section visualization
+import { Plus, Circle, WashingMachine, Power, Wrench, CheckCircle, Clock, Save, X, Trash2, Wind } from 'lucide-react';
 
 // ✅ TIMER COMPONENT
 function Timer({ startTime, onComplete }) {
@@ -138,7 +139,123 @@ export default function Machines({ user, onLogout, Layout = AdminLayout }) {
   const maintenanceCount = machines.filter(m => m.status === 'Maintenance').length;
   const inUseCount = machines.filter(m => m.status === 'In Use').length;
 
-    if (loading) return <LoadingScreen />;
+  // ✅ SEPARATE MACHINES BY TYPE
+  const washers = machines.filter(m => m.type === 'Washer');
+  const dryers = machines.filter(m => m.type === 'Dryer');
+
+  // ✅ HELPER FUNCTION TO RENDER CARDS (Avoids duplicating code)
+  const renderMachineCard = (machine) => {
+    const isAvailable = machine.status === 'Available';
+    const isInUse = machine.status === 'In Use';
+    const isMaintenance = machine.status === 'Maintenance';
+
+    return (
+      <div key={machine._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md flex flex-col justify-between relative group">
+        
+        {/* Only Admin can Delete */}
+        {user.role === 'admin' && (
+          <button 
+            onClick={() => handleDeleteMachine(machine._id, machine.machineNumber, machine.status)}
+            className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
+            title="Delete Machine"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Card Content */}
+        <div>
+          <div className="flex items-center justify-between mb-4 pr-8">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${
+                isInUse ? 'bg-blue-100 text-blue-600' : 
+                isMaintenance ? 'bg-orange-100 text-orange-600' :
+                'bg-gray-100 text-gray-600'
+              }`}>
+                {/* Show Wind icon for Dryers, WashingMachine for Washers */}
+                {machine.type === 'Dryer' ? <Wind className="w-6 h-6" /> : <WashingMachine className="w-6 h-6" />}
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">{machine.machineNumber}</h3>
+                <p className="text-sm text-gray-500">{machine.type}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Circle className={`w-3 h-3 fill-current ${
+                isAvailable ? 'text-green-500' :
+                isInUse ? 'text-blue-500' :
+                'text-orange-500'
+              }`} />
+            </div>
+          </div>
+
+          <div className="space-y-3 py-4 border-t border-b border-gray-50 my-2 min-h-[80px] flex items-center justify-center">
+            {isInUse ? (
+               <div className="text-center w-full">
+                 <span className="text-xs font-bold text-blue-600 uppercase tracking-wide block mb-2">Cycle In Progress</span>
+                 <Timer 
+                   startTime={machine.startTime} 
+                   onComplete={() => fetchMachines()} 
+                 />
+               </div>
+            ) : isMaintenance ? (
+                <div className="text-center">
+                 <span className="text-xs font-bold text-orange-600 uppercase tracking-wide flex items-center gap-2 justify-center">
+                   <Wrench className="w-4 h-4" /> Under Repair
+                 </span>
+                 <p className="text-gray-400 text-xs mt-1">Technician notified</p>
+               </div>
+            ) : (
+              <div className="text-center text-gray-400 text-sm italic">
+                Ready for next customer
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-2 flex gap-2">
+          {isMaintenance ? (
+            <button 
+              onClick={() => handleMaintenance(machine)}
+              className="w-full px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <CheckCircle className="w-4 h-4" />
+              Mark Repaired
+            </button>
+          ) : (
+            <>
+              <button 
+                onClick={() => handleToggleRun(machine)}
+                disabled={isInUse && false} 
+                className={`flex-1 px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2 ${
+                  isInUse 
+                  ? 'bg-red-50 text-red-600 hover:bg-red-100' 
+                  : 'bg-green-50 text-green-600 hover:bg-green-100'
+                }`}
+              >
+                <Power className="w-4 h-4" />
+                {isInUse ? 'Stop' : 'Start'}
+              </button>
+
+              {!isInUse && (
+                <button 
+                  onClick={() => handleMaintenance(machine)}
+                  title="Set to Maintenance"
+                  className="px-3 py-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-orange-50 hover:text-orange-600 transition-colors border border-transparent hover:border-orange-200"
+                >
+                  <Wrench className="w-5 h-5" />
+                </button>
+              )}
+            </>
+          )}
+        </div>
+
+      </div>
+    );
+  };
+
+  if (loading) return <LoadingScreen />;
 
   // ✅ USE DYNAMIC LAYOUT
   return (
@@ -180,119 +297,30 @@ export default function Machines({ user, onLogout, Layout = AdminLayout }) {
         )}
       </div>
 
-      {/* Machines Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {machines.map((machine) => {
-          const isAvailable = machine.status === 'Available';
-          const isInUse = machine.status === 'In Use';
-          const isMaintenance = machine.status === 'Maintenance';
+      {/* ✅ WASHERS SECTION */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="p-2 bg-blue-100 rounded-lg"><WashingMachine className="w-6 h-6 text-blue-600" /></div>
+            Washer Units
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {washers.length > 0 ? washers.map(renderMachineCard) : (
+                <p className="text-gray-400 italic col-span-full py-4">No Washer units available.</p>
+            )}
+        </div>
+      </div>
 
-          return (
-            <div key={machine._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md flex flex-col justify-between relative group">
-              
-              {/* Only Admin can Delete */}
-              {user.role === 'admin' && (
-                <button 
-                  onClick={() => handleDeleteMachine(machine._id, machine.machineNumber, machine.status)}
-                  className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
-                  title="Delete Machine"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-
-              {/* Card Top: Info */}
-              <div>
-                <div className="flex items-center justify-between mb-4 pr-8">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      isInUse ? 'bg-blue-100 text-blue-600' : 
-                      isMaintenance ? 'bg-orange-100 text-orange-600' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      <WashingMachine className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-800">{machine.machineNumber}</h3>
-                      <p className="text-sm text-gray-500">{machine.type}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Circle className={`w-3 h-3 fill-current ${
-                      isAvailable ? 'text-green-500' :
-                      isInUse ? 'text-blue-500' :
-                      'text-orange-500'
-                    }`} />
-                  </div>
-                </div>
-
-                {/* Status Text Area */}
-                <div className="space-y-3 py-4 border-t border-b border-gray-50 my-2 min-h-[80px] flex items-center justify-center">
-                  {isInUse ? (
-                     <div className="text-center w-full">
-                       <span className="text-xs font-bold text-blue-600 uppercase tracking-wide block mb-2">Cycle In Progress</span>
-                       {/* ✅ FIXED: Passed fetchMachines so the page updates when time is up */}
-                       <Timer 
-                         startTime={machine.startTime} 
-                         onComplete={() => fetchMachines()} 
-                       />
-                     </div>
-                  ) : isMaintenance ? (
-                      <div className="text-center">
-                       <span className="text-xs font-bold text-orange-600 uppercase tracking-wide flex items-center gap-2 justify-center">
-                         <Wrench className="w-4 h-4" /> Under Repair
-                       </span>
-                       <p className="text-gray-400 text-xs mt-1">Technician notified</p>
-                     </div>
-                  ) : (
-                    <div className="text-center text-gray-400 text-sm italic">
-                      Ready for next customer
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ACTION BUTTONS AREA */}
-              <div className="mt-2 flex gap-2">
-                {isMaintenance ? (
-                  <button 
-                    onClick={() => handleMaintenance(machine)}
-                    className="w-full px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Mark Repaired
-                  </button>
-                ) : (
-                  <>
-                    <button 
-                      onClick={() => handleToggleRun(machine)}
-                      disabled={isInUse && false} 
-                      className={`flex-1 px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2 ${
-                        isInUse 
-                        ? 'bg-red-50 text-red-600 hover:bg-red-100' 
-                        : 'bg-green-50 text-green-600 hover:bg-green-100'
-                      }`}
-                    >
-                      <Power className="w-4 h-4" />
-                      {isInUse ? 'Stop' : 'Start'}
-                    </button>
-
-                    {!isInUse && (
-                      <button 
-                        onClick={() => handleMaintenance(machine)}
-                        title="Set to Maintenance"
-                        className="px-3 py-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-orange-50 hover:text-orange-600 transition-colors border border-transparent hover:border-orange-200"
-                      >
-                        <Wrench className="w-5 h-5" />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-
-            </div>
-          );
-        })}
+      {/* ✅ DRYERS SECTION */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2 border-t border-gray-100 pt-8">
+            <div className="p-2 bg-orange-100 rounded-lg"><Wind className="w-6 h-6 text-orange-600" /></div>
+            Dryer Units
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {dryers.length > 0 ? dryers.map(renderMachineCard) : (
+                <p className="text-gray-400 italic col-span-full py-4">No Dryer units available.</p>
+            )}
+        </div>
       </div>
 
       {/* Add Machine Modal */}

@@ -1,8 +1,8 @@
-// server/controllers/orderController.js
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Inventory = require('../models/Inventory');
 const User = require('../models/User');
+const Machine = require('../models/Machine'); // ✅ Added Machine Model
 
 // ============================================
 // CREATE ORDER (Staff/Admin)
@@ -14,13 +14,14 @@ const createOrder = async (req, res) => {
   try {
     const {
       customerName,
-      customerPhone, // NEW: Can search for existing customer
+      customerPhone,
       serviceType,
       weight,
       washCount,
       dryCount,
       totalPrice,
-      addOns
+      addOns,
+      machineIds // ✅ Now accepting selected machines
     } = req.body;
 
     // 1. Validation
@@ -28,7 +29,7 @@ const createOrder = async (req, res) => {
       throw new Error("Please fill in all required fields");
     }
 
-    // 2. Try to find existing customer by phone or name
+    // 2. Try to find existing customer by phone
     let customerId = null;
     if (customerPhone) {
       const existingCustomer = await User.findOne({ 
@@ -40,7 +41,12 @@ const createOrder = async (req, res) => {
       }
     }
 
-    // 3. Handle Inventory Deduction
+    // 3. Determine Initial Status
+    // If machines are selected -> 'In Progress'
+    // If NO machines are selected -> 'Queued'
+    const initialStatus = (machineIds && machineIds.length > 0) ? 'In Progress' : 'Queued';
+
+    // 4. Handle Inventory Deduction
     if (addOns && addOns.length > 0) {
       for (const item of addOns) {
         const product = await Inventory.findOneAndUpdate(
@@ -58,10 +64,10 @@ const createOrder = async (req, res) => {
       }
     }
 
-    // 4. Create the Order
+    // 5. Create the Order
     const newOrder = await Order.create([{
       customerName,
-      customerId, // Link to customer account if found
+      customerId, 
       phoneNumber: customerPhone || '',
       serviceType,
       weight,
@@ -69,11 +75,31 @@ const createOrder = async (req, res) => {
       dryCount,
       totalPrice,
       addOns: addOns || [],
-      status: 'Pending',
-      createdBy: req.user._id // Track which staff created this
+      status: initialStatus, // ✅ Set 'Queued' or 'In Progress'
+      machineIds: machineIds || [], // ✅ Save assigned machines
+      createdBy: req.user._id 
     }], { session });
 
-    // 5. Commit Transaction
+    // 6. Activate Machines (Only if provided)
+    if (machineIds && machineIds.length > 0) {
+      const now = new Date();
+      const cycleTime = 40 * 60 * 1000; // 40 minutes
+
+      await Machine.updateMany(
+        { _id: { $in: machineIds } },
+        { 
+          $set: { 
+            status: 'In Use',
+            currentOrderId: newOrder[0]._id,
+            startTime: now,
+            endTime: new Date(now.getTime() + cycleTime)
+          } 
+        },
+        { session }
+      );
+    }
+
+    // 7. Commit Transaction
     await session.commitTransaction();
     session.endSession();
 
