@@ -44,7 +44,7 @@ const createOrder = async (req, res) => {
     // 3. Determine Initial Status
     // If machines are selected -> 'In Progress'
     // If NO machines are selected -> 'Queued'
-    const initialStatus = (machineIds && machineIds.length > 0) ? 'In Progress' : 'Queued';
+    const initialStatus = (machineIds && machineIds.length > 0) ? 'In Progress' : 'Pending';
 
     // 4. Handle Inventory Deduction
     if (addOns && addOns.length > 0) {

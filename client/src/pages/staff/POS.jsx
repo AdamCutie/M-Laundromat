@@ -190,7 +190,7 @@ export default function POS({ user, onLogout }) {
       await orderService.createOrder(orderPayload);
       
       if (selectedMachines.length === 0) {
-        alert("✅ Order added to QUEUE (No machines selected).");
+        alert("✅ Order added to PENDING (No machines selected).");
       } else {
         alert("✅ Order Started! Machines Activated.");
       }
@@ -262,7 +262,7 @@ export default function POS({ user, onLogout }) {
             <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6">
               <h3 className="text-sm font-bold text-blue-800 mb-3 flex justify-between">
                 <span>Assign Machines</span>
-                <span className="font-normal text-blue-600 text-xs">Optional - Leave empty to Queue</span>
+                <span className="font-normal text-blue-600 text-xs">Optional - Leave empty to Pending</span>
               </h3>
               
               <div className="grid grid-cols-2 gap-3 mb-3">
@@ -387,7 +387,7 @@ export default function POS({ user, onLogout }) {
             )}
             {selectedMachines.length === 0 && cart.length > 0 && (
               <div className="mb-2 text-xs text-orange-600 bg-orange-50 p-2 rounded border border-orange-100">
-                No machines selected. Order will be <strong>QUEUED</strong>.
+                No machines selected. Order will be <strong>PENDING</strong>.
               </div>
             )}
 
@@ -406,7 +406,7 @@ export default function POS({ user, onLogout }) {
               }`}
             >
               <CreditCard className="w-5 h-5" />
-              {selectedMachines.length > 0 ? 'Start Order' : 'Add to Queue'}
+              {selectedMachines.length > 0 ? 'Start Order' : 'Add to Pending'}
             </button>
 
             {/* ✅ RESTORED: Clear Cart Button */}
