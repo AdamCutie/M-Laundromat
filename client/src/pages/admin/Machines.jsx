@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout'; // Default fallback
 import machineService from '../../services/machineService';
+import LoadingScreen from '../../components/LoadingScreen';
 import { Plus, Circle, WashingMachine, Power, Wrench, CheckCircle, Clock, Save, X, Trash2 } from 'lucide-react';
 
 // ✅ TIMER COMPONENT
@@ -137,7 +138,7 @@ export default function Machines({ user, onLogout, Layout = AdminLayout }) {
   const maintenanceCount = machines.filter(m => m.status === 'Maintenance').length;
   const inUseCount = machines.filter(m => m.status === 'In Use').length;
 
-  if (loading) return <div className="p-10 text-center">Loading Machines...</div>;
+    if (loading) return <LoadingScreen />;
 
   // ✅ USE DYNAMIC LAYOUT
   return (

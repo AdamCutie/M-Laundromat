@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import StaffLayout from '../../components/StaffLayout';
 import orderService from '../../services/orderService';
+import LoadingScreen from '../../components/LoadingScreen';
 import { Search, Filter, ArrowRight, RefreshCw, Calendar } from 'lucide-react';
 
 export default function StaffOrders({ user, onLogout }) {
@@ -87,7 +88,7 @@ export default function StaffOrders({ user, onLogout }) {
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Loading Orders...</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <StaffLayout user={user} onLogout={onLogout}>

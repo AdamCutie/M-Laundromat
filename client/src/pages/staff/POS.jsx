@@ -3,6 +3,7 @@ import StaffLayout from '../../components/StaffLayout';
 import inventoryService from '../../services/inventoryService';
 import settingService from '../../services/settingService';
 import orderService from '../../services/orderService';
+import LoadingScreen from '../../components/LoadingScreen';
 import { Plus, Minus, Trash2, User, CreditCard, ShoppingBag, Droplets, Wind, Package } from 'lucide-react';
 
 export default function POS({ user, onLogout }) {
@@ -166,7 +167,7 @@ export default function POS({ user, onLogout }) {
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Loading POS...</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <StaffLayout user={user} onLogout={onLogout}>
