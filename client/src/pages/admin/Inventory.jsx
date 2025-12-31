@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import inventoryService from '../../services/inventoryService';
-import { Plus, Package, AlertTriangle, Search, Save, X, Trash2 } from 'lucide-react'; // Added Trash2 here
+import { Plus, Package, AlertTriangle, Search, Save, X, Trash2, Pencil } from 'lucide-react'; // ✅ Added Pencil
 
 export default function Inventory({ user, onLogout }) {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Modal State for adding new item
+  // Modal State for Adding
   const [showAddModal, setShowAddModal] = useState(false);
   const [newItem, setNewItem] = useState({ itemName: '', stockLevel: 0, unitPrice: 0, costPrice: 0 });
+
+  // ✅ Modal State for Editing (New State)
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
 
   useEffect(() => {
     fetchInventory();
@@ -37,7 +41,7 @@ export default function Inventory({ user, onLogout }) {
     item.itemName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Action: Restock
+  // Action: Restock (Specific Stock Update)
   const handleRestock = async (item) => {
     const addedStockStr = window.prompt(`Restocking "${item.itemName}".\nCurrent: ${item.stockLevel}\n\nAdd how many?`);
     if (!addedStockStr) return;
@@ -47,7 +51,7 @@ export default function Inventory({ user, onLogout }) {
 
     try {
       await inventoryService.update(item._id, { stockLevel: item.stockLevel + addedStock });
-      fetchInventory(); // Refresh UI
+      fetchInventory(); 
       alert(`Success! New stock: ${item.stockLevel + addedStock}`);
     } catch (err) {
       alert("Failed to restock");
@@ -67,12 +71,35 @@ export default function Inventory({ user, onLogout }) {
     }
   };
 
+  // ✅ Action: Update Item (General Edit)
+  const handleUpdateItem = async (e) => {
+    e.preventDefault();
+    try {
+      await inventoryService.update(editingItem._id, editingItem);
+      
+      // Optimistic UI Update
+      setInventory(prev => prev.map(item => item._id === editingItem._id ? editingItem : item));
+      
+      setShowEditModal(false);
+      setEditingItem(null);
+      alert("Item updated successfully!");
+    } catch (err) {
+      alert("Failed to update item.");
+    }
+  };
+
+  // ✅ Helper: Open Edit Modal
+  const openEditModal = (item) => {
+    setEditingItem({ ...item }); // Copy item to avoid direct mutation
+    setShowEditModal(true);
+  };
+
   const handleDeleteItem = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) return;
     
     try {
       await inventoryService.deleteItem(id);
-      setInventory(prev => prev.filter(item => item._id !== id)); // Optimistic UI update
+      setInventory(prev => prev.filter(item => item._id !== id)); 
     } catch (err) {
       alert("Failed to delete item.");
     }
@@ -160,13 +187,23 @@ export default function Inventory({ user, onLogout }) {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right flex justify-end items-center gap-3">
+                    <td className="px-6 py-4 text-right flex justify-end items-center gap-2">
                       <button 
                         onClick={() => handleRestock(item)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium mr-2"
                       >
                         Restock
                       </button>
+                      
+                      {/* ✅ Edit Button */}
+                      <button 
+                        onClick={() => openEditModal(item)}
+                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Edit Item"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+
                       <button 
                         onClick={() => handleDeleteItem(item._id, item.itemName)}
                         className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -203,42 +240,53 @@ export default function Inventory({ user, onLogout }) {
             <form onSubmit={handleAddItem} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
-                <input 
-                  required
-                  type="text" 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={newItem.itemName}
-                  onChange={e => setNewItem({...newItem, itemName: e.target.value})}
-                  placeholder="e.g. Ariel Powder"
-                />
+                <input required type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.itemName} onChange={e => setNewItem({...newItem, itemName: e.target.value})} placeholder="e.g. Ariel Powder" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Price (₱)</label>
-                  <input 
-                    required
-                    type="number" 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={newItem.unitPrice}
-                    onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value)})}
-                  />
+                  <input required type="number" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.unitPrice} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value)})} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Initial Stock</label>
-                  <input 
-                    required
-                    type="number" 
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={newItem.stockLevel}
-                    onChange={e => setNewItem({...newItem, stockLevel: parseInt(e.target.value)})}
-                  />
+                  <input required type="number" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.stockLevel} onChange={e => setNewItem({...newItem, stockLevel: parseInt(e.target.value)})} />
                 </div>
               </div>
-              <button 
-                type="submit" 
-                className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-              >
+              <button type="submit" className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
                 <Save className="w-4 h-4" /> Save Product
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Edit Item Modal */}
+      {showEditModal && editingItem && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Edit Product</h3>
+              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateItem} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
+                <input required type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.itemName} onChange={e => setEditingItem({...editingItem, itemName: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₱)</label>
+                  <input required type="number" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.unitPrice} onChange={e => setEditingItem({...editingItem, unitPrice: parseFloat(e.target.value)})} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
+                  <input required type="number" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.stockLevel} onChange={e => setEditingItem({...editingItem, stockLevel: parseInt(e.target.value)})} />
+                </div>
+              </div>
+              <button type="submit" className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                <Save className="w-4 h-4" /> Update Product
               </button>
             </form>
           </div>
