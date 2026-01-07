@@ -61,7 +61,10 @@ const loginUser = async (req, res) => {
       res.json({
         _id: user.id,
         username: user.username,
+        email: user.email,           // Added
         role: user.role,
+        phoneNumber: user.phoneNumber, // ✅ CRITICAL FIX
+        address: user.address,       // Added
         token: generateToken(user._id, user.role),
       });
     } else {

@@ -2,30 +2,35 @@ import api from './api';
 
 // Service to interact with the Order API
 const orderService = {
-  // Get all orders
+  // Get all orders (Admin/Staff only)
   getAllOrders: async () => {
-    // This sends a GET request to /api/orders
     const response = await api.get('/orders');
-    return response.data; // We only return the data, not the full request object
+    return response.data;
   },
 
   // Create a new order
   createOrder: async (orderData) => {
-    // This sends a POST request to /api/orders with the data
     const response = await api.post('/orders', orderData);
     return response.data;
   },
   
+  // Get order stats (Admin only)
   getStats: async () => {
     const response = await api.get('/orders/stats');
     return response.data;
   },
 
+  // Update order status
   updateStatus: async (id, status) => {
     const response = await api.put(`/orders/${id}`, { status });
     return response.data;
-  }
+  },
 
+  // ✅ FIX: Get customer's own orders (Customer only)
+  getCustomerOrders: async () => {
+    const response = await api.get('/customers/my-orders');
+    return response.data;
+  }
 };
 
 export default orderService;

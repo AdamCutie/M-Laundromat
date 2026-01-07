@@ -1,9 +1,17 @@
-// server/controllers/customerController.js
 const User = require('../models/User');
 const Order = require('../models/Order');
 const Machine = require('../models/Machine');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
+// ============================================
+// HELPER: Generate JWT Token
+// ============================================
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, { 
+    expiresIn: '30d' 
+  });
+};
 
 // ============================================
 // CUSTOMER REGISTRATION
@@ -40,7 +48,7 @@ const registerCustomer = async (req, res) => {
       role: 'customer' // Force role to customer
     });
 
-    // 5. Generate token and return user data
+    // 5. Generate token
     const token = generateToken(customer._id, customer.role);
 
     res.status(201).json({
@@ -48,6 +56,7 @@ const registerCustomer = async (req, res) => {
       username: customer.username,
       email: customer.email,
       role: customer.role,
+      phoneNumber: customer.phoneNumber,
       token
     });
 
@@ -67,8 +76,8 @@ const getMyOrders = async (req, res) => {
     const orders = await Order.find({ 
       customerId: req.user._id 
     })
-    .sort({ createdAt: -1 })
-    .select('-__v'); // Exclude version key
+    .sort({ createdAt: -1 }) // Newest first
+    .select('-__v'); 
 
     res.json(orders);
   } catch (error) {
@@ -118,6 +127,10 @@ const getProfile = async (req, res) => {
     const customer = await User.findById(req.user._id)
       .select('-password -__v');
     
+    if (!customer) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     res.json(customer);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -129,46 +142,57 @@ const getProfile = async (req, res) => {
 // ============================================
 const updateProfile = async (req, res) => {
   try {
-    const { phoneNumber, address, email } = req.body;
-    
-    const updates = {};
-    if (phoneNumber !== undefined) updates.phoneNumber = phoneNumber;
-    if (address !== undefined) updates.address = address;
-    if (email !== undefined) updates.email = email;
+    const user = await User.findById(req.user._id);
 
-    const customer = await User.findByIdAndUpdate(
-      req.user._id,
-      updates,
-      { new: true }
-    ).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-    res.json(customer);
+    // Track if phone number is changing
+    const oldPhone = user.phoneNumber;
+    const newPhone = req.body.phoneNumber;
+    // Check if newPhone is provided and is actually different
+    const isPhoneUpdated = newPhone && (newPhone !== oldPhone);
+
+    // Update fields
+    user.username = req.body.username || user.username;
+    user.email = req.body.email || user.email;
+    user.phoneNumber = newPhone || user.phoneNumber;
+    user.address = req.body.address || user.address;
+
+    // Handle password update if provided
+    if (req.body.password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(req.body.password, salt);
+    }
+
+    const updatedUser = await user.save();
+
+    // ✅ CRITICAL FIX: Retroactively link past orders
+    // If the user updated their phone number, find all "Guest" orders 
+    // with that number and assign them to this account.
+    if (isPhoneUpdated) {
+      await Order.updateMany(
+        { phoneNumber: updatedUser.phoneNumber, customerId: null },
+        { $set: { customerId: updatedUser._id } }
+      );
+    }
+
+    // Return updated info + token (to keep frontend state consistent)
+    res.json({
+      _id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      phoneNumber: updatedUser.phoneNumber,
+      address: updatedUser.address,
+      role: updatedUser.role,
+      token: generateToken(updatedUser._id, updatedUser.role),
+    });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
-// ============================================
-// HELPER: Generate JWT Token
-// ============================================
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { 
-    expiresIn: '30d' 
-  });
-};
-
-// ============================================
-// EXPLANATION:
-// ============================================
-// This controller handles all customer-facing operations:
-// - Registration (public)
-// - View their own orders (protected)
-// - Track order status (protected)
-// - View available machines (protected)
-// - Manage profile (protected)
-//
-// Security: All operations are scoped to the logged-in customer
-// using req.user._id from the JWT token
 
 module.exports = {
   registerCustomer,
