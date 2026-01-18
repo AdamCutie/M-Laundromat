@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import { UserPlus, AlertCircle, Sparkles } from 'lucide-react';
 
-const Register = () => {
-  const { register } = useContext(AuthContext); // Ensure your AuthContext has a 'register' function
+// ✅ Added props: isModal and onSwitchToLogin
+export default function Register({ isModal = false, onSwitchToLogin }) { 
+  const { register } = useContext(AuthContext);
   const navigate = useNavigate();
-
+  
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -30,10 +31,7 @@ const Register = () => {
     }
 
     setLoading(true);
-
     try {
-      // Call Register from Context
-      // We pass role: 'customer' by default.
       const result = await register({
         username: formData.username,
         email: formData.email,
@@ -42,7 +40,8 @@ const Register = () => {
       });
 
       if (result.success) {
-        navigate('/customer/dashboard'); 
+        // If successful, App.js RootDispatcher will automatically detect the user 
+        // and switch to the Dashboard. We don't strictly need to navigate manually.
       } else {
         setError(result.message || 'Registration failed');
         setLoading(false);
@@ -53,9 +52,18 @@ const Register = () => {
     }
   };
 
+  // ✅ CONDITIONAL STYLING
+  const containerClass = isModal 
+    ? "w-full" 
+    : "min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-500 to-indigo-600 p-4";
+
+  const cardClass = isModal
+    ? "bg-white p-8 rounded-2xl shadow-none" 
+    : "bg-white/95 backdrop-blur-md w-full max-w-md p-8 rounded-2xl shadow-2xl border border-white/20";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-500 to-indigo-600 p-4">
-      <div className="bg-white/95 backdrop-blur-md w-full max-w-md p-8 rounded-2xl shadow-2xl border border-white/20">
+    <div className={containerClass}>
+      <div className={cardClass}>
         
         {/* Header */}
         <div className="text-center mb-8">
@@ -147,9 +155,19 @@ const Register = () => {
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
-            <Link to="/" className="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">
-              Sign In
-            </Link>
+            {/* ✅ Switch Logic: If in modal, switch. Else, link to login page */}
+            {isModal ? (
+              <button 
+                onClick={onSwitchToLogin}
+                className="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline"
+              >
+                Sign In
+              </button>
+            ) : (
+              <Link to="/login" className="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">
+                Sign In
+              </Link>
+            )}
           </p>
         </div>
 
@@ -157,5 +175,3 @@ const Register = () => {
     </div>
   );
 };
-
-export default Register;

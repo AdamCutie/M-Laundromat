@@ -1,11 +1,14 @@
 import React, { useState, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { Sparkles, AlertCircle, LogIn, User } from 'lucide-react'; // Added User icon
+import { Sparkles, AlertCircle, LogIn, User } from 'lucide-react';
 
-const Login = () => {
+// ✅ Accept 'onSwitchToRegister' prop for modal switching
+export default function Login({ isModal = false, onSwitchToRegister }) { 
   const { login } = useContext(AuthContext);
-  const [username, setUsername] = useState(''); // Changed from email to username
+  const navigate = useNavigate();
+  
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,18 +18,28 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    // Pass 'username' instead of 'email'
     const result = await login(username, password);
 
-    if (!result.success) {
+    if (result.success) {
+      // The App.js RootDispatcher handles the redirect automatically
+    } else {
       setError(result.message || 'Invalid username or password');
       setLoading(false);
     }
   };
 
+  // CONDITIONAL STYLING
+  const containerClass = isModal 
+    ? "w-full" 
+    : "min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 to-cyan-500 p-4";
+
+  const cardClass = isModal
+    ? "bg-white p-8 rounded-2xl shadow-none" 
+    : "bg-white/95 backdrop-blur-md w-full max-w-md p-8 rounded-2xl shadow-2xl border border-white/20";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 to-cyan-500 p-4">
-      <div className="bg-white/95 backdrop-blur-md w-full max-w-md p-8 rounded-2xl shadow-2xl border border-white/20">
+    <div className={containerClass}>
+      <div className={cardClass}>
         
         {/* Header */}
         <div className="text-center mb-8">
@@ -53,7 +66,7 @@ const Login = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
             <div className="relative">
               <input 
-                type="text" // ✅ Changed from 'email' to 'text' to remove @ validation
+                type="text"
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
                 placeholder="Enter your username"
                 value={username}
@@ -89,19 +102,27 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Footer */}
+        {/* Footer with Switch Logic */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
-              Create Account
-            </Link>
+            {/* ✅ LOGIC UPDATE: Use button if modal, Link if page */}
+            {isModal ? (
+              <button 
+                onClick={onSwitchToRegister}
+                className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline bg-transparent border-none cursor-pointer"
+              >
+                Create Account
+              </button>
+            ) : (
+              <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
+                Create Account
+              </Link>
+            )}
           </p>
         </div>
 
       </div>
     </div>
   );
-};
-
-export default Login;
+}

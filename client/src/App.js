@@ -5,6 +5,7 @@ import AuthContext, { AuthProvider } from './context/AuthContext';
 // Components
 import Login from './components/Login';
 import Register from './components/Register';
+import LandingPage from './pages/LandingPage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -33,7 +34,7 @@ const ProtectedRoute = ({ children, allowedRole }) => {
 
   // 1. Not Logged In? -> Go to Login
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // 2. Wrong Role? -> Go to their specific home
@@ -49,17 +50,27 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   return children;
 };
 
-// ✅ 2. Logic for the Root Path ("/")
-const RootRedirect = () => {
+// If logged in -> Go to Dashboard
+// If guest -> Show Landing Page
+const RootDispatcher = () => {
   const { user, loading } = useContext(AuthContext);
   if (loading) return <div>Loading...</div>;
 
-  if (!user) return <Login />;
+  if (!user) return <LandingPage />; // ✅ Show Landing Page for guests
   
-  // Auto-redirect logged-in users
+  // If logged in, redirect to appropriate dashboard
   if (user.role === 'admin') return <Navigate to="/admin/dashboard" />;
   if (user.role === 'staff') return <Navigate to="/staff/dashboard" />;
   return <Navigate to="/customer/dashboard" />;
+};
+
+// If guest -> Show Login Form
+// If logged in -> Redirect to Dashboard
+const LoginDispatcher = () => {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) return <div>Loading...</div>;
+  if (user) return <Navigate to="/" />; // Will hit RootDispatcher and redirect correctly
+  return <Login />;
 };
 
 function AppRoutes() {
@@ -68,7 +79,8 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<RootRedirect />} />
+      <Route path="/" element={<RootDispatcher />} />
+      <Route path="/login" element={<LoginDispatcher />} />
       <Route path="/register" element={<Register />} />
       
       {/* --- ADMIN ROUTES --- */}
