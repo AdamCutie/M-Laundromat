@@ -1,15 +1,15 @@
 import React, { useState, useContext } from 'react';
-import { Link } from 'react-router-dom'; // ✅ Removed useNavigate
+import { Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
-import { UserPlus, AlertCircle, Sparkles } from 'lucide-react';
+import { UserPlus, AlertCircle, Sparkles, Phone } from 'lucide-react'; // ✅ Import Phone Icon
 
 export default function Register({ isModal = false, onSwitchToLogin }) {
   const { register } = useContext(AuthContext);
-  // ✅ Removed const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     username: '',
     email: '',
+    phoneNumber: '', // ✅ Added phoneNumber state
     password: '',
     confirmPassword: ''
   });
@@ -34,6 +34,7 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
       const result = await register({
         username: formData.username,
         email: formData.email,
+        phoneNumber: formData.phoneNumber, // ✅ Send phoneNumber to backend
         password: formData.password,
         role: 'customer' 
       });
@@ -48,6 +49,17 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
       setLoading(false);
     }
   };
+
+  // ✅ NEW: Helper to enforce 11 digits & numbers only
+const handlePhoneChange = (e) => {
+  // 1. Remove any non-number character
+  const value = e.target.value.replace(/\D/g, '');
+  
+  // 2. Only update if length is <= 11
+  if (value.length <= 11) {
+    setFormData({ ...formData, phoneNumber: value });
+  }
+};
 
   // CONDITIONAL STYLING
   const containerClass = isModal 
@@ -90,6 +102,7 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
               placeholder="John Doe" value={formData.username} onChange={handleChange} required 
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
             <input 
@@ -97,6 +110,26 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
               placeholder="you@example.com" value={formData.email} onChange={handleChange} required 
             />
           </div>
+
+          {/* ✅ ADDED: Phone Number Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+            <div className="relative">
+              <input 
+                name="phoneNumber" 
+                type="tel" 
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+                placeholder="0912 345 6789" 
+                value={formData.phoneNumber} 
+                onChange={handlePhoneChange}
+                required 
+                maxLength={11}
+              />
+              <Phone className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+            </div>
+            <p className="text-xs text-gray-500 mt-1 ml-1">Required for order tracking.</p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input 
@@ -104,6 +137,7 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
               placeholder="••••••••" value={formData.password} onChange={handleChange} required 
             />
           </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
             <input 
