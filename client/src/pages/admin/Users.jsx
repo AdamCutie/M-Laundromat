@@ -11,7 +11,15 @@ export default function Users({ user, onLogout }) {
   
   // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newUser, setNewUser] = useState({ username: '', password: '', isAdmin: false });
+  
+  // ✅ UPDATE: Added phoneNumber to state
+  const [newUser, setNewUser] = useState({ 
+    username: '', 
+    email: '', 
+    password: '', 
+    role: 'staff',
+    phoneNumber: '' 
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -41,17 +49,19 @@ export default function Users({ user, onLogout }) {
   const handleAddUser = async (e) => {
     e.preventDefault();
     try {
-      // Map the simple form state to the API expected format
-      // Note: The backend uses 'name' or 'username'. We'll send both to be safe based on your controller.
+      // ✅ UPDATE: Sending phoneNumber to backend
       await userService.register({
         username: newUser.username,
+        email: newUser.email,
         password: newUser.password,
-        isAdmin: newUser.isAdmin
+        role: newUser.role,
+        phoneNumber: newUser.phoneNumber
       });
       
       alert("User created successfully!");
       setShowAddModal(false);
-      setNewUser({ username: '', password: '', isAdmin: false });
+      // Reset form
+      setNewUser({ username: '', email: '', password: '', role: 'staff', phoneNumber: '' });
       fetchUsers();
     } catch (err) {
       alert("Error: " + (err.response?.data?.message || err.message));
@@ -186,11 +196,13 @@ export default function Users({ user, onLogout }) {
                       ) : (
                         <span className="text-xs text-gray-400 italic">No email</span>
                       )}
-                      {usr.phoneNumber && (
+                      {usr.phoneNumber ? (
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Phone className="w-3 h-3" />
                           {usr.phoneNumber}
                         </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">No phone</span>
                       )}
                     </div>
                   </td>
@@ -218,23 +230,53 @@ export default function Users({ user, onLogout }) {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md mx-4 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Add New Staff / User</h3>
+              <h3 className="text-lg font-semibold">Add New Staff / Admin</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
+            
             <form onSubmit={handleAddUser} className="p-6 space-y-4">
+              
+              {/* Username Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username (Display Name)</label>
                 <input 
                   required
                   type="text" 
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={newUser.username}
                   onChange={e => setNewUser({...newUser, username: e.target.value})}
-                  placeholder="e.g. jdoe"
+                  placeholder="e.g. John Doe"
                 />
               </div>
+
+              {/* Email Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <input 
+                  required
+                  type="email" 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newUser.email}
+                  onChange={e => setNewUser({...newUser, email: e.target.value})}
+                  placeholder="admin@example.com"
+                />
+              </div>
+
+              {/* ✅ NEW: Phone Number Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input 
+                  type="tel" 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={newUser.phoneNumber}
+                  onChange={e => setNewUser({...newUser, phoneNumber: e.target.value})}
+                  placeholder="e.g. 0912 345 6789"
+                />
+              </div>
+
+              {/* Password Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <input 
@@ -246,22 +288,24 @@ export default function Users({ user, onLogout }) {
                   placeholder="••••••••"
                 />
               </div>
-              <div className="flex items-center gap-2 pt-2">
-                <input 
-                  type="checkbox" 
-                  id="isAdmin"
-                  className="w-4 h-4 text-blue-600 rounded"
-                  checked={newUser.isAdmin}
-                  onChange={e => setNewUser({...newUser, isAdmin: e.target.checked})}
-                />
-                <label htmlFor="isAdmin" className="text-sm text-gray-700">Grant Admin Privileges?</label>
+
+              {/* Role Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assign Role</label>
+                <select
+                  value={newUser.role}
+                  onChange={e => setNewUser({...newUser, role: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                >
+                  <option value="staff">Staff</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  * Admins have full access. Staff have restricted access.
+                </p>
               </div>
               
               <div className="pt-2">
-                 <p className="text-xs text-gray-500 mb-4">
-                   * New users created here are "Staff" or "Admin" by default. 
-                   Customers register themselves on the public page.
-                 </p>
                 <button 
                   type="submit" 
                   className="w-full flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"

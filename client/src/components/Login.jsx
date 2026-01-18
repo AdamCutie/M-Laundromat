@@ -7,7 +7,7 @@ export default function Login({ isModal = false, onSwitchToRegister }) {
   const { login } = useContext(AuthContext);
   // ✅ Removed const navigate = useNavigate();
   
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,12 +17,12 @@ export default function Login({ isModal = false, onSwitchToRegister }) {
     setError('');
     setLoading(true);
 
-    const result = await login(username, password);
+    const result = await login(email, password);
 
     if (result.success) {
       // App.js RootDispatcher handles the redirect automatically
     } else {
-      setError(result.message || 'Invalid username or password');
+      setError(result.message || 'Invalid email or password');
       setLoading(false);
     }
   };
@@ -62,14 +62,14 @@ export default function Login({ isModal = false, onSwitchToRegister }) {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <div className="relative">
               <input 
                 type="text"
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required 
               />
               <User className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
