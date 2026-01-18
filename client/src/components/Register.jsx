@@ -1,12 +1,11 @@
 import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom'; // ✅ Removed useNavigate
 import AuthContext from '../context/AuthContext';
 import { UserPlus, AlertCircle, Sparkles } from 'lucide-react';
 
-// ✅ Added props: isModal and onSwitchToLogin
-export default function Register({ isModal = false, onSwitchToLogin }) { 
+export default function Register({ isModal = false, onSwitchToLogin }) {
   const { register } = useContext(AuthContext);
-  const navigate = useNavigate();
+  // ✅ Removed const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     username: '',
@@ -39,20 +38,18 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
         role: 'customer' 
       });
 
-      if (result.success) {
-        // If successful, App.js RootDispatcher will automatically detect the user 
-        // and switch to the Dashboard. We don't strictly need to navigate manually.
-      } else {
+      if (!result.success) {
         setError(result.message || 'Registration failed');
         setLoading(false);
       }
+      // If success, App.js redirects automatically
     } catch (err) {
       setError('An unexpected error occurred.');
       setLoading(false);
     }
   };
 
-  // ✅ CONDITIONAL STYLING
+  // CONDITIONAL STYLING
   const containerClass = isModal 
     ? "w-full" 
     : "min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-500 to-indigo-600 p-4";
@@ -89,65 +86,37 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
             <input 
-              name="username"
-              type="text" 
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:bg-white outline-none transition-all"
-              placeholder="John Doe"
-              value={formData.username}
-              onChange={handleChange}
-              required 
+              name="username" type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+              placeholder="John Doe" value={formData.username} onChange={handleChange} required 
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
             <input 
-              name="email"
-              type="email" 
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:bg-white outline-none transition-all"
-              placeholder="you@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              required 
+              name="email" type="email" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+              placeholder="you@example.com" value={formData.email} onChange={handleChange} required 
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <input 
-              name="password"
-              type="password" 
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:bg-white outline-none transition-all"
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={handleChange}
-              required 
+              name="password" type="password" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+              placeholder="••••••••" value={formData.password} onChange={handleChange} required 
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
             <input 
-              name="confirmPassword"
-              type="password" 
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:bg-white outline-none transition-all"
-              placeholder="••••••••"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required 
+              name="confirmPassword" type="password" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
+              placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange} required 
             />
           </div>
 
           <button 
-            type="submit" 
-            disabled={loading}
-            className="w-full mt-2 flex items-center justify-center gap-2 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-cyan-200 disabled:opacity-70 disabled:cursor-not-allowed"
+            type="submit" disabled={loading}
+            className="w-full mt-2 flex items-center justify-center gap-2 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-semibold transition-all shadow-lg shadow-cyan-200 disabled:opacity-70"
           >
-            {loading ? 'Creating Account...' : (
-              <>
-                <UserPlus className="w-5 h-5" /> Sign Up
-              </>
-            )}
+            {loading ? 'Creating Account...' : ( <> <UserPlus className="w-5 h-5" /> Sign Up </> )}
           </button>
         </form>
 
@@ -155,12 +124,8 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
-            {/* ✅ Switch Logic: If in modal, switch. Else, link to login page */}
             {isModal ? (
-              <button 
-                onClick={onSwitchToLogin}
-                className="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline"
-              >
+              <button onClick={onSwitchToLogin} className="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline bg-transparent border-none cursor-pointer">
                 Sign In
               </button>
             ) : (

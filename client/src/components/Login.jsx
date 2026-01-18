@@ -1,12 +1,11 @@
 import React, { useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom'; // ✅ Removed useNavigate
 import AuthContext from '../context/AuthContext';
 import { Sparkles, AlertCircle, LogIn, User } from 'lucide-react';
 
-// ✅ Accept 'onSwitchToRegister' prop for modal switching
 export default function Login({ isModal = false, onSwitchToRegister }) { 
   const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
+  // ✅ Removed const navigate = useNavigate();
   
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -21,7 +20,7 @@ export default function Login({ isModal = false, onSwitchToRegister }) {
     const result = await login(username, password);
 
     if (result.success) {
-      // The App.js RootDispatcher handles the redirect automatically
+      // App.js RootDispatcher handles the redirect automatically
     } else {
       setError(result.message || 'Invalid username or password');
       setLoading(false);
@@ -102,11 +101,10 @@ export default function Login({ isModal = false, onSwitchToRegister }) {
           </button>
         </form>
 
-        {/* Footer with Switch Logic */}
+        {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600">
             Don't have an account?{' '}
-            {/* ✅ LOGIC UPDATE: Use button if modal, Link if page */}
             {isModal ? (
               <button 
                 onClick={onSwitchToRegister}

@@ -1,134 +1,124 @@
-import React, { useContext } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useContext, Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import AuthContext, { AuthProvider } from './context/AuthContext';
-
-// Components
-import Login from './components/Login';
-import Register from './components/Register';
 import LandingPage from './pages/LandingPage';
+// ✅ Import at top
+import StaffLayout from './components/StaffLayout'; 
+
+// --- LAZY LOAD COMPONENTS ---
+// Note: Login/Register are now imported inside LandingPage, 
+// so we don't strictly need them here unless used elsewhere.
 
 // Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminInventory from './pages/admin/Inventory';
-import AdminMachines from './pages/admin/Machines';
-import AdminUsers from './pages/admin/Users';
-import AdminReports from './pages/admin/Reports';   
-import AdminSettings from './pages/admin/Settings'; 
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminInventory = lazy(() => import('./pages/admin/Inventory'));
+const AdminMachines = lazy(() => import('./pages/admin/Machines'));
+const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const AdminReports = lazy(() => import('./pages/admin/Reports'));
+const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 
 // Staff Pages
-import StaffPOS from './pages/staff/POS';
-import StaffOrders from './pages/staff/Orders';
-import StaffLayout from './components/StaffLayout';
+const StaffPOS = lazy(() => import('./pages/staff/POS'));
+const StaffOrders = lazy(() => import('./pages/staff/Orders'));
 
-// Customer Pages 
-import CustomerDashboard from './pages/customer/Dashboard';
-import CustomerOrders from './pages/customer/Orders';
-import CustomerProfile from './pages/customer/Profile';
+// Customer Pages
+const CustomerDashboard = lazy(() => import('./pages/customer/Dashboard'));
+const CustomerOrders = lazy(() => import('./pages/customer/Orders'));
+const CustomerProfile = lazy(() => import('./pages/customer/Profile'));
 
-// ✅ 1. THE FIX: Create a reusable Protection Wrapper
-// This component handles the logic for ALL routes.
-const ProtectedRoute = ({ children, allowedRole }) => {
-  const { user, loading } = useContext(AuthContext);
-
-  if (loading) return <div>Loading...</div>;
-
-  // 1. Not Logged In? -> Go to Login
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // 2. Wrong Role? -> Go to their specific home
-  if (user.role !== allowedRole) {
-    // Redirect based on what role they actually are
-    if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
-    if (user.role === 'staff') return <Navigate to="/staff/dashboard" replace />;
-    if (user.role === 'customer') return <Navigate to="/customer/dashboard" replace />;
-    return <Navigate to="/" replace />;
-  }
-
-  // 3. Allowed? -> Render the page
-  return children;
+// --- CONSTANTS ---
+const ROLES = {
+  ADMIN: 'admin',
+  STAFF: 'staff',
+  CUSTOMER: 'customer'
 };
 
-// If logged in -> Go to Dashboard
-// If guest -> Show Landing Page
+// --- COMPONENTS ---
+
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+  </div>
+);
+
+// Protected Route Wrapper
+const ProtectedRoute = ({ allowedRole }) => {
+  const { user, loading } = useContext(AuthContext);
+
+  if (loading) return <LoadingSpinner />;
+
+  // Redirect unauthenticated users to Landing Page
+  if (!user) return <Navigate to="/" replace />;
+
+  if (user.role !== allowedRole) {
+    switch (user.role) {
+      case ROLES.ADMIN: return <Navigate to="/admin/dashboard" replace />;
+      case ROLES.STAFF: return <Navigate to="/staff/dashboard" replace />;
+      case ROLES.CUSTOMER: return <Navigate to="/customer/dashboard" replace />;
+      default: return <Navigate to="/" replace />;
+    }
+  }
+
+  return <Outlet />;
+};
+
+// Root Dispatcher
 const RootDispatcher = () => {
   const { user, loading } = useContext(AuthContext);
-  if (loading) return <div>Loading...</div>;
-
-  if (!user) return <LandingPage />; // ✅ Show Landing Page for guests
+  if (loading) return <LoadingSpinner />;
   
-  // If logged in, redirect to appropriate dashboard
-  if (user.role === 'admin') return <Navigate to="/admin/dashboard" />;
-  if (user.role === 'staff') return <Navigate to="/staff/dashboard" />;
-  return <Navigate to="/customer/dashboard" />;
+  // If guest, show Landing Page (which contains Login/Register modals)
+  if (!user) return <LandingPage />;
+
+  // If logged in, send to dashboard
+  switch (user.role) {
+    case ROLES.ADMIN: return <Navigate to="/admin/dashboard" />;
+    case ROLES.STAFF: return <Navigate to="/staff/dashboard" />;
+    default: return <Navigate to="/customer/dashboard" />;
+  }
 };
 
-// If guest -> Show Login Form
-// If logged in -> Redirect to Dashboard
-const LoginDispatcher = () => {
-  const { user, loading } = useContext(AuthContext);
-  if (loading) return <div>Loading...</div>;
-  if (user) return <Navigate to="/" />; // Will hit RootDispatcher and redirect correctly
-  return <Login />;
-};
-
+// --- MAIN ROUTES CONFIGURATION ---
 function AppRoutes() {
   const { user, logout } = useContext(AuthContext);
+  const pageProps = { user, onLogout: logout };
 
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<RootDispatcher />} />
-      <Route path="/login" element={<LoginDispatcher />} />
-      <Route path="/register" element={<Register />} />
-      
-      {/* --- ADMIN ROUTES --- */}
-      {/* Now we just wrap the element. Much cleaner! */}
-      <Route path="/admin/dashboard" element={
-        <ProtectedRoute allowedRole="admin"><AdminDashboard user={user} onLogout={logout} /></ProtectedRoute>
-      } />
-      <Route path="/admin/users" element={
-        <ProtectedRoute allowedRole="admin"><AdminUsers user={user} onLogout={logout} /></ProtectedRoute>
-      } />
-      <Route path="/admin/machines" element={
-        <ProtectedRoute allowedRole="admin"><AdminMachines user={user} onLogout={logout} /></ProtectedRoute>
-      } />
-      <Route path="/admin/inventory" element={
-        <ProtectedRoute allowedRole="admin"><AdminInventory user={user} onLogout={logout} /></ProtectedRoute>
-      } />
-      <Route path="/admin/reports" element={
-        <ProtectedRoute allowedRole="admin"><AdminReports user={user} onLogout={logout} /></ProtectedRoute>
-      } />
-      <Route path="/admin/settings" element={
-        <ProtectedRoute allowedRole="admin"><AdminSettings user={user} onLogout={logout} /></ProtectedRoute>
-      } />
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        {/* === PUBLIC ROUTES === */}
+        {/* ✅ CLEANED UP: Only Root is needed now */}
+        <Route path="/" element={<RootDispatcher />} />
 
-      {/* --- STAFF ROUTES --- */}
-      <Route path="/staff/dashboard" element={
-        <ProtectedRoute allowedRole="staff"><StaffPOS user={user} onLogout={logout} /></ProtectedRoute>
-      } />
-      <Route path="/staff/orders" element={
-        <ProtectedRoute allowedRole="staff"><StaffOrders user={user} onLogout={logout} /></ProtectedRoute>
-      } />
-      <Route path="/staff/machines" element={
-        <ProtectedRoute allowedRole="staff"><AdminMachines user={user} onLogout={logout} Layout={StaffLayout} /></ProtectedRoute>
-      } />
+        {/* === ADMIN ROUTES GROUP === */}
+        <Route element={<ProtectedRoute allowedRole={ROLES.ADMIN} />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard {...pageProps} />} />
+          <Route path="/admin/users" element={<AdminUsers {...pageProps} />} />
+          <Route path="/admin/machines" element={<AdminMachines {...pageProps} />} />
+          <Route path="/admin/inventory" element={<AdminInventory {...pageProps} />} />
+          <Route path="/admin/reports" element={<AdminReports {...pageProps} />} />
+          <Route path="/admin/settings" element={<AdminSettings {...pageProps} />} />
+        </Route>
 
-      {/* --- CUSTOMER ROUTES --- */}
-      <Route path="/customer/dashboard" element={
-        <ProtectedRoute allowedRole="customer"><CustomerDashboard user={user} onLogout={logout} /></ProtectedRoute>
-      } />
-      <Route path="/customer/orders" element={
-        <ProtectedRoute allowedRole="customer"><CustomerOrders user={user} onLogout={logout} /></ProtectedRoute>
-      } />
-      <Route path="/customer/profile" element={
-        <ProtectedRoute allowedRole="customer"><CustomerProfile user={user} onLogout={logout} /></ProtectedRoute>
-      } />
-      
-      {/* Catch-all for unknown routes */}
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+        {/* === STAFF ROUTES GROUP === */}
+        <Route element={<ProtectedRoute allowedRole={ROLES.STAFF} />}>
+          <Route path="/staff/dashboard" element={<StaffPOS {...pageProps} />} />
+          <Route path="/staff/orders" element={<StaffOrders {...pageProps} />} />
+          <Route path="/staff/machines" element={<AdminMachines {...pageProps} Layout={StaffLayout} />} />
+        </Route>
+
+        {/* === CUSTOMER ROUTES GROUP === */}
+        <Route element={<ProtectedRoute allowedRole={ROLES.CUSTOMER} />}>
+          <Route path="/customer/dashboard" element={<CustomerDashboard {...pageProps} />} />
+          <Route path="/customer/orders" element={<CustomerOrders {...pageProps} />} />
+          <Route path="/customer/profile" element={<CustomerProfile {...pageProps} />} />
+        </Route>
+
+        {/* === FALLBACK === */}
+        {/* If someone types /login or /register, this catches them and sends them to / */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </Suspense>
   );
 }
 
