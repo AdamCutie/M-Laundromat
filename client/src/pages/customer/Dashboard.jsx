@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import CustomerLayout from '../../components/CustomerLayout';
 import orderService from '../../services/orderService';
 import LoadingScreen from '../../components/LoadingScreen';
-import { Package, Clock, CheckCircle, DollarSign, ArrowRight } from 'lucide-react';
+import { Package, Clock, CheckCircle, DollarSign, ArrowRight, Calendar } from 'lucide-react'; // Added Calendar icon
 import { Link } from 'react-router-dom';
 
 export default function CustomerDashboard({ user, onLogout }) {
@@ -21,15 +21,33 @@ export default function CustomerDashboard({ user, onLogout }) {
 
   const fetchData = async () => {
     try {
-      // 1. Fetch orders specific to this customer
+      // 1. Fetch all orders (we still need history for the list at the bottom)
       const data = await orderService.getCustomerOrders();
       setOrders(data);
 
-      // 2. Calculate Stats dynamically
-      const total = data.length;
-      const active = data.filter(o => ['Pending', 'In Progress', 'Ready'].includes(o.status)).length;
-      const completed = data.filter(o => ['Completed', 'Claimed'].includes(o.status)).length;
-      const spent = data.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+      // 2. Define "Today" (Midnight to Midnight)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set to 12:00 AM today
+
+      // 3. Filter orders to get only those created today
+      const todaysOrders = data.filter(order => {
+        const orderDate = new Date(order.createdAt);
+        orderDate.setHours(0, 0, 0, 0); // Normalize order time to 12:00 AM
+        return orderDate.getTime() === today.getTime();
+      });
+
+      // 4. Calculate Stats using ONLY today's orders
+      const total = todaysOrders.length;
+      
+      const active = todaysOrders.filter(o => 
+        ['Pending', 'In Progress', 'Ready'].includes(o.status)
+      ).length;
+      
+      const completed = todaysOrders.filter(o => 
+        ['Completed', 'Claimed'].includes(o.status)
+      ).length;
+      
+      const spent = todaysOrders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
 
       setStats({ total, active, completed, spent });
       setLoading(false);
@@ -41,31 +59,40 @@ export default function CustomerDashboard({ user, onLogout }) {
 
   if (loading) return <LoadingScreen />;
 
-  // Get only the 3 most recent orders
+  // Get only the 3 most recent orders (from the full list)
   const recentOrders = orders.slice(0, 3);
 
   return (
     <CustomerLayout user={user} onLogout={onLogout}>
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-8 rounded-2xl mb-8 shadow-lg shadow-indigo-200">
-        <h1 className="text-3xl font-bold mb-2">Welcome back, {user.name}!</h1>
-        <p className="text-indigo-100 opacity-90">Here is what is happening with your laundry today.</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.username || 'Customer'}!</h1>
+            <p className="text-indigo-100 opacity-90">Here is your daily activity report.</p>
+          </div>
+          {/* Daily Badge */}
+          <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg flex items-center gap-2">
+             <Calendar className="w-5 h-5 text-white" />
+             <span className="font-bold text-sm">Today's Stats</span>
+          </div>
+        </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards (Now reflects ONLY today) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <StatCard icon={Package} title="Total Orders" value={stats.total} color="blue" />
-        <StatCard icon={Clock} title="In Progress" value={stats.active} color="yellow" />
-        <StatCard icon={CheckCircle} title="Completed" value={stats.completed} color="green" />
-        <StatCard icon={DollarSign} title="Total Spent" value={`₱${stats.spent.toLocaleString()}`} color="purple" />
+        <StatCard icon={Package} title="Orders Today" value={stats.total} color="blue" />
+        <StatCard icon={Clock} title="Active Today" value={stats.active} color="yellow" />
+        <StatCard icon={CheckCircle} title="Completed Today" value={stats.completed} color="green" />
+        <StatCard icon={DollarSign} title="Spent Today" value={`₱${stats.spent.toLocaleString()}`} color="purple" />
       </div>
 
-      {/* Recent Orders Panel */}
+      {/* Recent Orders Panel (Shows all time history) */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-800">Recent Orders</h2>
+          <h2 className="text-xl font-bold text-gray-800">Recent Activity</h2>
           <Link to="/customer/orders" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
-            View All <ArrowRight className="w-4 h-4" />
+            View All History <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
@@ -144,9 +171,9 @@ function StatusBadge({ status }) {
   const styles = {
     'Pending': 'bg-yellow-100 text-yellow-700',
     'In Progress': 'bg-blue-100 text-blue-700',
-    'Ready': 'bg-green-100 text-green-700',
-    'Completed': 'bg-gray-100 text-gray-600',
-    'Claimed': 'bg-gray-200 text-gray-500 line-through',
+    'Ready': 'bg-emerald-100 text-emerald-700',
+    'Completed': 'bg-green-100 text-green-700',
+    'Claimed': 'bg-green-100 text-green-700',
   };
   return (
     <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full ${styles[status] || 'bg-gray-100 text-gray-600'}`}>
