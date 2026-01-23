@@ -1,7 +1,8 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom'; // ✅ Removed useNavigate
 import AuthContext from '../context/AuthContext';
-import { Sparkles, AlertCircle, LogIn, User } from 'lucide-react';
+import { AlertCircle, LogIn, User } from 'lucide-react';
+import Logo from './Logo';
 
 export default function Login({ isModal = false, onSwitchToRegister }) { 
   const { login } = useContext(AuthContext);
@@ -42,12 +43,10 @@ export default function Login({ isModal = false, onSwitchToRegister }) {
         
         {/* Header */}
         <div className="text-center mb-8">
+         {/* Logo centered */}
           <div className="flex justify-center mb-4">
-            <div className="p-3 bg-indigo-100 rounded-full text-indigo-600">
-              <Sparkles className="w-8 h-8" />
-            </div>
+             <Logo className="scale-125" /> {/* scale-125 makes it slightly bigger for the login screen */}
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">M-Laundromat</h1>
           <p className="text-gray-500 mt-2">Welcome back! Please sign in.</p>
         </div>
 

@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
-// Link is used for internal page navigation if needed, but we mostly use modals now
-import { Link } from 'react-router-dom'; 
-import { Sparkles, WashingMachine, Clock, Smartphone, ShieldCheck, ArrowRight, Menu, X } from 'lucide-react';
+import { WashingMachine, Clock, Smartphone, ShieldCheck, ArrowRight, Menu, X } from 'lucide-react';
 
-// ✅ Import Both Auth Components
 import Login from '../components/Login'; 
 import Register from '../components/Register';
+import logo from '../assets/logo.png';
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
-  // ✅ Dual Modal State: can be 'login', 'register', or null (closed)
+  // Dual Modal State: 'login', 'register', or null
   const [activeModal, setActiveModal] = useState(null); 
 
-  // --- HELPER FUNCTIONS ---
   const openLogin = () => {
     setActiveModal('login');
     setIsMenuOpen(false);
@@ -32,7 +29,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white font-sans text-gray-900 relative">
       
       {/* =========================================
-          ✅ SHARED MODAL OVERLAY 
+          SHARED MODAL OVERLAY 
       ========================================= */}
       {activeModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -40,13 +37,12 @@ export default function LandingPage() {
           {/* Blurred Backdrop */}
           <div 
             className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-all"
-            onClick={closeModal} // Close when clicking outside
+            onClick={closeModal}
           ></div>
 
-          {/* Modal Content Wrapper */}
+          {/* Modal Content */}
           <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
             
-            {/* Close Button */}
             <button 
               onClick={closeModal}
               className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors z-10"
@@ -54,7 +50,6 @@ export default function LandingPage() {
               <X className="w-5 h-5" />
             </button>
 
-            {/* ✅ Render Login or Register based on state */}
             {activeModal === 'login' && (
               <Login 
                 isModal={true} 
@@ -78,12 +73,30 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             
-            {/* Logo */}
-            <div className="flex items-center gap-2 text-indigo-600">
-              <div className="bg-indigo-100 p-2 rounded-lg">
-                <Sparkles className="w-6 h-6" />
-              </div>
-              <span className="font-bold text-xl tracking-tight">Laundromat v2</span>
+            {/* --- HYBRID LOGO: Clickable Div (Scrolls to Top) --- */}
+            <div 
+              onClick={() => {
+                closeModal(); // 1. Close modals
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // 2. Scroll to top
+              }} 
+              className="flex items-center gap-3 select-none cursor-pointer group"
+            >
+              
+              {/* 1. The Character Image */}
+              <img 
+                src={logo} 
+                alt="M Laundro-Mat" 
+                className="w-12 h-12 rounded-full border-2 border-indigo-100 shadow-sm group-hover:scale-110 transition-transform duration-300" 
+              />
+
+              {/* 2. The Modern Wordmark */}
+              <span className="font-[Outfit,sans-serif] text-2xl font-extrabold tracking-tight text-gray-900">
+                M-Laundr
+                {/* The "o" matches the cyan in your image background */}
+                <span className="text-cyan-500 inline-block group-hover:animate-bounce">o</span>
+                -Mat
+              </span>
+              
             </div>
 
             {/* Desktop Nav */}
@@ -92,7 +105,6 @@ export default function LandingPage() {
               <a href="#how-it-works" className="text-gray-600 hover:text-indigo-600 font-medium transition-colors">How it Works</a>
               
               <div className="flex items-center gap-4">
-                {/* Login Button */}
                 <button 
                   onClick={openLogin}
                   className="text-indigo-600 font-bold hover:text-indigo-700 transition-colors"
@@ -100,7 +112,6 @@ export default function LandingPage() {
                   Log In
                 </button>
 
-                {/* Get Started Button (Triggers Register Modal) */}
                 <button 
                   onClick={openRegister}
                   className="bg-indigo-600 text-white px-5 py-2.5 rounded-full font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
@@ -160,7 +171,7 @@ export default function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            {/* Create Account (Triggers Register Modal) */}
+            {/* Create Account Button */}
             <button 
               onClick={openRegister}
               className="w-full sm:w-auto px-8 py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-2"
@@ -168,7 +179,7 @@ export default function LandingPage() {
               Create Account <ArrowRight className="w-5 h-5" />
             </button>
             
-            {/* Staff/User Login (Triggers Login Modal) */}
+            {/* Login Button */}
             <button 
               onClick={openLogin}
               className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all"
@@ -177,7 +188,7 @@ export default function LandingPage() {
             </button>
           </div>
 
-          {/* Stats / Social Proof */}
+          {/* Stats */}
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-gray-200 pt-8 opacity-70">
             <div>
               <p className="text-3xl font-bold text-indigo-600">500+</p>
@@ -235,15 +246,16 @@ export default function LandingPage() {
               <WashingMachine className="w-6 h-6" />
             </div>
             <div>
-              <span className="font-bold text-xl tracking-tight block">Laundromat v2</span>
+              <span className="font-bold text-xl tracking-tight block">M Laundro-Mat</span>
               <span className="text-xs text-gray-400">© 2026 All rights reserved.</span>
             </div>
           </div>
           
           <div className="flex gap-6 text-sm text-gray-400">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-white transition-colors">Contact Support</a>
+            {/* ✅ Fixed anchor warnings by using valid paths */}
+            <a href="/" className="hover:text-white transition-colors">Privacy Policy</a>
+            <a href="/" className="hover:text-white transition-colors">Terms of Service</a>
+            <a href="/" className="hover:text-white transition-colors">Contact Support</a>
           </div>
         </div>
       </footer>
