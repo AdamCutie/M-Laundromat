@@ -1,6 +1,7 @@
 import React from 'react';
+import Logo from './Logo'; // ✅ Import Logo
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, ClipboardList, LogOut, Sparkles, WashingMachine } from 'lucide-react';
+import { ShoppingCart, ClipboardList, LogOut, WashingMachine } from 'lucide-react'; // Removed Sparkles
 
 const navItems = [
   { path: '/staff/dashboard', icon: ShoppingCart, label: 'Point of Sale' },
@@ -19,15 +20,18 @@ export default function StaffLayout({ children, user, onLogout }) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col fixed h-full z-10">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-2 text-emerald-600">
-            <Sparkles className="w-6 h-6" />
-            <span className="font-bold text-lg">Laundromat v2</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">Staff Panel</p>
+        
+        {/* ✅ FIXED: Sidebar Header with Centered Logo */}
+        <div className="py-6 border-b border-gray-200 flex flex-col items-center justify-center text-center">
+          <Link to="/staff/dashboard">
+            <Logo /> 
+          </Link>
+          <p className="text-xs text-gray-500 mt-3 font-medium tracking-wider uppercase">
+            Staff Panel
+          </p>
         </div>
 
         {/* Navigation */}
@@ -41,7 +45,7 @@ export default function StaffLayout({ children, user, onLogout }) {
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                   isActive
-                    ? 'bg-emerald-50 text-emerald-600 font-medium'
+                    ? 'bg-emerald-50 text-emerald-600 font-medium' // Kept Emerald theme for Staff
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >

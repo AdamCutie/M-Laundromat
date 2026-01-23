@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ClipboardList, User, LogOut, Sparkles } from 'lucide-react';
+import { Home, ClipboardList, User, LogOut } from 'lucide-react';
+import logo from '../assets/logo.png'; // ✅ Importing image directly
 
 const navItems = [
   { path: '/customer/dashboard', icon: Home, label: 'Dashboard' },
@@ -18,13 +19,29 @@ export default function CustomerLayout({ children, user, onLogout }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             
-            {/* Logo */}
-            <div className="flex items-center gap-2 text-indigo-600">
-              <div className="bg-indigo-100 p-2 rounded-lg">
-                <Sparkles className="w-6 h-6" />
-              </div>
-              <span className="font-bold text-lg tracking-tight hidden sm:block">Laundromat v2</span>
-            </div>
+            {/* --- LOGO SECTION --- */}
+            {/* ✅ Changed div to Link, removed onClick scroll, points to Dashboard */}
+            <Link 
+              to="/customer/dashboard" 
+              className="flex items-center gap-3 select-none cursor-pointer group"
+            >
+              
+              {/* 1. The Character Image */}
+              <img 
+                src={logo} 
+                alt="M Laundro-Mat" 
+                className="w-10 h-10 rounded-full border-2 border-indigo-100 shadow-sm group-hover:scale-110 transition-transform duration-300" 
+              />
+
+              {/* 2. The Modern Wordmark */}
+              <span className="font-[Outfit,sans-serif] text-xl font-extrabold tracking-tight text-gray-900">
+                M-Laundr
+                {/* The "o" matches the cyan in your image background */}
+                <span className="text-cyan-500 inline-block group-hover:animate-bounce">o</span>
+                -Mat
+              </span>
+              
+            </Link>
 
             {/* Navigation Links */}
             <div className="flex items-center gap-2 sm:gap-6">

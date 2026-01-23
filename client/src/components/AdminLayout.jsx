@@ -1,4 +1,5 @@
 import React from 'react';
+import Logo from './Logo';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -7,8 +8,7 @@ import {
   Package, 
   FileText, 
   Settings, 
-  LogOut,
-  Sparkles 
+  LogOut
 } from 'lucide-react';
 
 const navItems = [
@@ -16,7 +16,7 @@ const navItems = [
   { path: '/admin/users', icon: Users, label: 'Users & Staff' },
   { path: '/admin/machines', icon: Boxes, label: 'Machines' },
   { path: '/admin/inventory', icon: Package, label: 'Inventory' },
-  { path: '/admin/reports', icon: ReportsPlaceholder, label: 'Reports' }, // Placeholder function below
+  { path: '/admin/reports', icon: ReportsPlaceholder, label: 'Reports' }, 
   { path: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -34,15 +34,18 @@ export default function AdminLayout({ children, user, onLogout }) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 flex flex-col fixed h-full z-10">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-2 text-blue-600">
-            <Sparkles className="w-6 h-6" />
-            <span className="font-bold text-lg">Laundromat v2</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">Admin Panel</p>
+        
+        {/* ✅ FIXED: Clean Sidebar Header */}
+        <div className="py-6 border-b border-gray-200 flex flex-col items-center justify-center text-center">
+          <Link to="/admin/dashboard">
+            <Logo /> 
+          </Link>
+          <p className="text-xs text-gray-500 mt-3 font-medium tracking-wider uppercase">
+            Admin Panel
+          </p>
         </div>
 
         {/* Navigation */}
