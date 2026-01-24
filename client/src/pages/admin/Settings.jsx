@@ -60,21 +60,26 @@ export default function Settings({ user, onLogout }) {
     <AdminLayout user={user} onLogout={onLogout}>
       <h2 className="text-2xl font-bold text-gray-800 mb-6">System Settings</h2>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar Navigation for Settings */}
+      {/* Main Layout: Column on Mobile, Row on Desktop */}
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        
+        {/* Navigation Sidebar/TopBar */}
         <div className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-row lg:flex-col overflow-x-auto no-scrollbar">
             {tabs.map((tab) => {
               const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${
-                    activeTab === tab.id
-                      ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50 border-l-4 border-transparent'
-                  }`}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap flex-1 lg:flex-none
+                    ${isActive 
+                      ? 'bg-blue-50 text-blue-600 border-b-2 lg:border-b-0 lg:border-l-4 border-blue-600' 
+                      : 'text-gray-600 hover:bg-gray-50 border-b-2 lg:border-b-0 lg:border-l-4 border-transparent'
+                    }
+                  `}
                 >
                   <Icon className="w-4 h-4" />
                   {tab.label}
@@ -85,16 +90,18 @@ export default function Settings({ user, onLogout }) {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1">
-          {/* PRICING TAB (Functional) */}
+        <div className="flex-1 min-w-0">
+          
+          {/* PRICING TAB */}
           {activeTab === 'pricing' && (
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100">
               <div className="mb-6">
                 <h3 className="text-lg font-bold text-gray-800">Service Pricing</h3>
                 <p className="text-sm text-gray-500">Configure base rates for services. These affect all new orders.</p>
               </div>
 
               <form onSubmit={handleSavePricing} className="space-y-6">
+                
                 {/* Full Service Section */}
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
@@ -129,7 +136,7 @@ export default function Settings({ user, onLogout }) {
                 {/* Self Service Section */}
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                     <CreditCard className="w-4 h-4 text-green-600" /> Self Service
+                      <CreditCard className="w-4 h-4 text-green-600" /> Self Service
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -157,10 +164,10 @@ export default function Settings({ user, onLogout }) {
                   </div>
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-2">
                   <button 
                     type="submit" 
-                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
                   >
                     <Save className="w-4 h-4" /> Save Changes
                   </button>
@@ -169,7 +176,7 @@ export default function Settings({ user, onLogout }) {
             </div>
           )}
 
-          {/* OTHER TABS (Placeholders for now) */}
+          {/* OTHER TABS (Placeholders) */}
           {activeTab !== 'pricing' && (
             <div className="bg-white p-12 rounded-xl shadow-sm border border-gray-100 text-center">
               <div className="inline-block p-4 bg-gray-50 rounded-full mb-4">

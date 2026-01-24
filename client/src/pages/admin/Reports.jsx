@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
-import { FileText, Download, TrendingUp, DollarSign } from 'lucide-react';
+import { FileText, Download, TrendingUp, DollarSign, Calendar } from 'lucide-react';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -29,7 +29,7 @@ export default function Reports({ user, onLogout }) {
     }
   };
 
-  // --- 1. FILTER LOGIC (The Fix) ---
+  // --- 1. FILTER LOGIC ---
   const filteredOrders = useMemo(() => {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -38,11 +38,10 @@ export default function Reports({ user, onLogout }) {
       const orderDate = new Date(order.createdAt);
       
       switch (dateRange) {
-        case 'Today':
-          return orderDate >= startOfDay;
+        case 'Today': return orderDate >= startOfDay;
         case 'This Week':
           const startOfWeek = new Date(now);
-          startOfWeek.setDate(now.getDate() - 7); // Last 7 days
+          startOfWeek.setDate(now.getDate() - 7); 
           return orderDate >= startOfWeek;
         case 'This Month':
           const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -50,13 +49,12 @@ export default function Reports({ user, onLogout }) {
         case 'This Year':
           const startOfYear = new Date(now.getFullYear(), 0, 1);
           return orderDate >= startOfYear;
-        default:
-          return true;
+        default: return true;
       }
     });
   }, [orders, dateRange]);
 
-  // --- 2. DATA PROCESSING (Uses filteredOrders now) ---
+  // --- 2. DATA PROCESSING ---
   
   // Service Type Distribution
   const serviceStats = filteredOrders.reduce((acc, order) => {
@@ -91,97 +89,120 @@ export default function Reports({ user, onLogout }) {
 
   return (
     <AdminLayout user={user} onLogout={onLogout}>
+      
       {/* Header */}
-      <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-800">Financial Reports</h2>
-          <p className="text-gray-500 text-sm">Overview of your business performance</p>
+          <p className="text-gray-500 text-sm mt-1">
+             Performance overview for <span className="font-semibold text-blue-600">{dateRange}</span>
+          </p>
         </div>
-        <div className="flex gap-2">
-          <select 
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
-          >
-            <option>Today</option>
-            <option>This Week</option>
-            <option>This Month</option>
-            <option>This Year</option>
-          </select>
+        
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          {/* Date Selector */}
+          <div className="relative w-full sm:w-48">
+             <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+             <select 
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer bg-white text-sm"
+              >
+                <option>Today</option>
+                <option>This Week</option>
+                <option>This Month</option>
+                <option>This Year</option>
+              </select>
+          </div>
+
+          {/* Export Button */}
           <button 
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm shadow-sm"
             onClick={() => window.print()}
           >
-            <Download className="w-4 h-4" /> Export PDF
+            <Download className="w-4 h-4" /> 
+            <span>Export PDF</span>
           </button>
         </div>
       </div>
 
-      {/* Summary Cards (Now Dynamic) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-green-50 text-green-600 rounded-lg">
               <DollarSign className="w-5 h-5" />
             </div>
-            <span className="text-gray-500 text-sm font-medium">Revenue ({dateRange})</span>
+            <span className="text-gray-500 text-sm font-medium">Revenue</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">₱{totalRevenue.toLocaleString()}</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
               <FileText className="w-5 h-5" />
             </div>
-            <span className="text-gray-500 text-sm font-medium">Orders ({dateRange})</span>
+            <span className="text-gray-500 text-sm font-medium">Total Orders</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{totalOrders}</p>
         </div>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
               <TrendingUp className="w-5 h-5" />
             </div>
-            <span className="text-gray-500 text-sm font-medium">Avg. Order Value</span>
+            <span className="text-gray-500 text-sm font-medium">Avg. Value</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">₱{avgOrderValue.toFixed(2)}</p>
         </div>
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         
         {/* Revenue Chart */}
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
           <h3 className="text-lg font-bold text-gray-800 mb-4">Revenue Trend</h3>
-          <div className="h-64">
+          <div className="h-64 w-full">
             {revenueChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenueChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="date" fontSize={12} />
-                  <YAxis fontSize={12} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis 
+                    dataKey="date" 
+                    fontSize={11} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    dy={10} 
+                  />
+                  <YAxis 
+                    fontSize={11} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tickFormatter={(val) => `₱${val}`} 
+                  />
                   <Tooltip 
+                    cursor={{ fill: '#f9fafb' }}
                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
                     formatter={(value) => [`₱${value}`, 'Revenue']}
                   />
-                  <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={32} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                No revenue data for {dateRange}
+              <div className="h-full flex items-center justify-center text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                <span className="text-sm">No revenue data for {dateRange}</span>
               </div>
             )}
           </div>
         </div>
 
         {/* Service Type Breakdown */}
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
           <h3 className="text-lg font-bold text-gray-800 mb-4">Orders by Service Type</h3>
-          <div className="h-64">
+          <div className="h-64 w-full">
             {serviceChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -194,19 +215,25 @@ export default function Reports({ user, onLogout }) {
                     fill="#8884d8"
                     paddingAngle={5}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
                   >
                     {serviceChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
+                  <Legend 
+                    layout="horizontal" 
+                    verticalAlign="bottom" 
+                    align="center"
+                    iconType="circle"
+                  />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">
-                No orders found for {dateRange}
+              <div className="h-full flex items-center justify-center text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                <span className="text-sm">No orders found for {dateRange}</span>
               </div>
             )}
           </div>
@@ -215,25 +242,27 @@ export default function Reports({ user, onLogout }) {
 
       {/* Recent Transactions Table */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
            <h3 className="text-lg font-bold text-gray-800">Filtered Transactions</h3>
         </div>
+        
+        {/* Scrollable Container for Mobile */}
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+          <table className="w-full min-w-[600px]">
+            <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
               <tr>
-                <th className="px-6 py-3 text-left">Order ID</th>
-                <th className="px-6 py-3 text-left">Date</th>
-                <th className="px-6 py-3 text-left">Customer</th>
-                <th className="px-6 py-3 text-left">Service</th>
-                <th className="px-6 py-3 text-right">Amount</th>
-                <th className="px-6 py-3 text-center">Status</th>
+                <th className="px-6 py-3 text-left font-semibold">Order ID</th>
+                <th className="px-6 py-3 text-left font-semibold">Date</th>
+                <th className="px-6 py-3 text-left font-semibold">Customer</th>
+                <th className="px-6 py-3 text-left font-semibold">Service</th>
+                <th className="px-6 py-3 text-right font-semibold">Amount</th>
+                <th className="px-6 py-3 text-center font-semibold">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredOrders.length > 0 ? (
                 filteredOrders.slice(0, 10).map((order) => (
-                  <tr key={order._id} className="hover:bg-gray-50">
+                  <tr key={order._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-3 text-sm font-medium text-gray-900">
                       #{order._id.slice(-6).toUpperCase()}
                     </td>
@@ -250,7 +279,7 @@ export default function Reports({ user, onLogout }) {
                       ₱{order.totalPrice}
                     </td>
                     <td className="px-6 py-3 text-center">
-                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                      <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
                         order.status === 'Completed' ? 'bg-green-100 text-green-700' :
                         order.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-blue-100 text-blue-700'
@@ -262,7 +291,7 @@ export default function Reports({ user, onLogout }) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-400">
                     No transactions found for {dateRange}.
                   </td>
                 </tr>

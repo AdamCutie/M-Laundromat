@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom'; // ✅ Added for navigation
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 import orderService from '../../services/orderService';
 import machineService from '../../services/machineService';
@@ -9,23 +9,28 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 
-// Metric Card Component (Refactored to support onClick)
+// ✅ METRIC CARD (Mobile Optimized)
 function MetricCard({ title, value, subtext, isPositive, icon: Icon, iconBg, iconColor, onClick }) {
   return (
     <div 
       onClick={onClick}
-      className={`bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md ${onClick ? 'cursor-pointer hover:border-blue-300' : ''}`}
+      className={`
+        bg-white p-5 rounded-xl shadow-sm border border-gray-100 
+        transition-all duration-200
+        ${onClick ? 'cursor-pointer hover:border-blue-300 hover:shadow-md active:scale-95' : ''}
+      `}
     >
       <div className="flex items-center justify-between mb-4">
         <div className={`p-3 rounded-lg ${iconBg}`}>
           <Icon className={`w-6 h-6 ${iconColor}`} />
         </div>
-        <div className={`flex items-center gap-1 text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-          {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+        <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${isPositive ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+          {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+          <span>{isPositive ? '+2.5%' : '-1.2%'}</span> {/* Placeholder logic or pass as prop */}
         </div>
       </div>
-      <h3 className="text-2xl font-bold mb-1">{value}</h3>
-      <p className="text-sm text-gray-500">{title}</p>
+      <h3 className="text-2xl font-bold mb-1 text-gray-800">{value}</h3>
+      <p className="text-sm text-gray-500 font-medium">{title}</p>
       {subtext && <p className="text-xs text-gray-400 mt-1">{subtext}</p>}
     </div>
   );
@@ -34,21 +39,19 @@ function MetricCard({ title, value, subtext, isPositive, icon: Icon, iconBg, ico
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function Dashboard({ user, onLogout }) {
-  const navigate = useNavigate(); // ✅ Hook for navigation
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState('Today'); // Default is Today
+  const [dateRange, setDateRange] = useState('Today');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch ALL data so we can filter it locally
         const [ordersData, machinesData] = await Promise.all([
           orderService.getAllOrders(),
           machineService.getMachines()
         ]);
-
         setOrders(ordersData);
         setMachines(machinesData);
         setLoading(false);
@@ -67,10 +70,8 @@ export default function Dashboard({ user, onLogout }) {
     
     return orders.filter(order => {
       const orderDate = new Date(order.createdAt);
-      
       switch (dateRange) {
-        case 'Today':
-          return orderDate >= startOfDay;
+        case 'Today': return orderDate >= startOfDay;
         case 'This Week':
           const startOfWeek = new Date(now);
           startOfWeek.setDate(now.getDate() - 7);
@@ -81,8 +82,7 @@ export default function Dashboard({ user, onLogout }) {
         case 'This Year':
           const startOfYear = new Date(now.getFullYear(), 0, 1);
           return orderDate >= startOfYear;
-        default:
-          return true;
+        default: return true;
       }
     });
   }, [orders, dateRange]);
@@ -91,14 +91,10 @@ export default function Dashboard({ user, onLogout }) {
   const revenue = filteredOrders.reduce((sum, order) => sum + order.totalPrice, 0);
   const orderCount = filteredOrders.length;
   const avgOrderValue = orderCount > 0 ? revenue / orderCount : 0;
-  
-  // Machine stats (Real-time, not affected by date filter)
   const activeMachines = machines.filter(m => m.status === 'In Use').length;
   const totalMachinesCount = machines.length;
 
-  // --- 3. CHART DATA PREPARATION ---
-  
-  // Pie Chart: Order Status
+  // --- 3. CHART DATA ---
   const statusCounts = filteredOrders.reduce((acc, order) => {
     acc[order.status] = (acc[order.status] || 0) + 1;
     return acc;
@@ -109,18 +105,14 @@ export default function Dashboard({ user, onLogout }) {
     value: statusCounts[status]
   }));
 
-  // Line Chart: Revenue over time (Dynamic grouping)
   const revenueByDate = filteredOrders.reduce((acc, order) => {
-    // Format label based on range (Time for Today, Date for others)
     let label;
     const date = new Date(order.createdAt);
-    
     if (dateRange === 'Today') {
       label = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else {
       label = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     }
-
     acc[label] = (acc[label] || 0) + order.totalPrice;
     return acc;
   }, {});
@@ -130,24 +122,27 @@ export default function Dashboard({ user, onLogout }) {
     revenue: revenueByDate[label]
   }));
 
-  if (loading) return <div className="p-10 text-center">Loading Dashboard...</div>;
+  if (loading) return <div className="p-10 text-center text-gray-500">Loading Dashboard...</div>;
 
   return (
     <AdminLayout user={user} onLogout={onLogout}>
       
       {/* HEADER WITH FILTER */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
            <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-           <p className="text-sm text-gray-500">Overview for <span className="font-semibold text-blue-600">{dateRange}</span></p>
+           <p className="text-sm text-gray-500 mt-1">
+             Overview for <span className="font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{dateRange}</span>
+           </p>
         </div>
         
-        <div className="relative">
-          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        {/* Date Filter - Full width on Mobile */}
+        <div className="relative w-full md:w-auto">
+          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
           <select 
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white cursor-pointer hover:border-blue-400 transition-colors"
+            className="w-full md:w-48 pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white cursor-pointer hover:border-blue-400 transition-colors text-sm font-medium"
           >
             <option>Today</option>
             <option>This Week</option>
@@ -157,22 +152,22 @@ export default function Dashboard({ user, onLogout }) {
         </div>
       </div>
 
-      {/* METRICS CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* METRICS GRID (Responsive: 1 -> 2 -> 4 Columns) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         <MetricCard
           title="Revenue"
           value={`₱${revenue.toLocaleString()}`}
-          subtext={`Earnings ${dateRange}`}
+          subtext="Total Earnings"
           isPositive={true}
           icon={DollarSign}
           iconBg="bg-green-100"
           iconColor="text-green-600"
-          onClick={() => navigate('/admin/reports')} // ✅ Clickable Link
+          onClick={() => navigate('/admin/reports')}
         />
         <MetricCard
           title="Orders"
           value={orderCount}
-          subtext={`Total ${dateRange}`}
+          subtext="Total Transactions"
           isPositive={true}
           icon={ShoppingCart}
           iconBg="bg-blue-100"
@@ -181,17 +176,17 @@ export default function Dashboard({ user, onLogout }) {
         <MetricCard
           title="Active Machines"
           value={`${activeMachines}/${totalMachinesCount}`}
-          subtext="Live Status"
+          subtext="Real-time Usage"
           isPositive={activeMachines < totalMachinesCount}
           icon={Boxes}
           iconBg="bg-purple-100"
           iconColor="text-purple-600"
-          onClick={() => navigate('/admin/machines')} // ✅ Clickable Link
+          onClick={() => navigate('/admin/machines')}
         />
         <MetricCard
           title="Avg Order Value"
           value={`₱${Math.round(avgOrderValue)}`}
-          subtext={`Average ${dateRange}`}
+          subtext="Per Transaction"
           isPositive={true}
           icon={Users}
           iconBg="bg-orange-100"
@@ -199,36 +194,56 @@ export default function Dashboard({ user, onLogout }) {
         />
       </div>
 
-      {/* CHARTS ROW */}
+      {/* CHARTS GRID (Responsive: 1 -> 2 Columns) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         
         {/* Revenue Trend Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4">Revenue Trend ({dateRange})</h2>
-          <div className="h-72">
+        <div className="bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Revenue Trend</h2>
+          <div className="h-64 md:h-72 w-full">
             {revenueData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip formatter={(value) => [`₱${value}`, 'Revenue']} />
-                  <Legend />
-                  <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fontSize: 11, fill: '#6b7280' }} 
+                    tickLine={false}
+                    axisLine={false}
+                    dy={10}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 11, fill: '#6b7280' }} 
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `₱${value}`}
+                  />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                    formatter={(value) => [`₱${value}`, 'Revenue']} 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#3b82f6" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} 
+                    activeDot={{ r: 6 }} 
+                  />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-                No revenue data recorded for {dateRange}
+              <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                <p>No revenue data for {dateRange}</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Order Status Pie Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4">Order Status Distribution</h2>
-          <div className="h-72">
+        <div className="bg-white p-5 md:p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Order Status</h2>
+          <div className="h-64 md:h-72 w-full">
             {pieData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -238,26 +253,33 @@ export default function Dashboard({ user, onLogout }) {
                     cy="50%"
                     innerRadius={60}
                     outerRadius={80}
-                    fill="#8884d8"
                     paddingAngle={5}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false} // Cleaner look on mobile
                   >
                     {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
                     ))}
                   </Pie>
-                  <Tooltip />
-                  <Legend />
+                  <Tooltip 
+                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                  />
+                  <Legend 
+                    layout="horizontal" 
+                    verticalAlign="bottom" 
+                    align="center"
+                    iconType="circle"
+                  />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-                No orders found for {dateRange}
+              <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                <p>No orders found for {dateRange}</p>
               </div>
             )}
           </div>
         </div>
+
       </div>
     </AdminLayout>
   );

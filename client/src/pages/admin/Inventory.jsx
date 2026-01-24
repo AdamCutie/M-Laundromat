@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import inventoryService from '../../services/inventoryService';
-import { Plus, Package, AlertTriangle, Search, Save, X, Trash2, Pencil } from 'lucide-react'; // ✅ Added Pencil
+import { Plus, Package, AlertTriangle, Search, Save, X, Trash2, Pencil } from 'lucide-react';
 
 export default function Inventory({ user, onLogout }) {
   const [inventory, setInventory] = useState([]);
@@ -12,7 +12,7 @@ export default function Inventory({ user, onLogout }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newItem, setNewItem] = useState({ itemName: '', stockLevel: 0, unitPrice: 0, costPrice: 0 });
 
-  // ✅ Modal State for Editing (New State)
+  // Modal State for Editing
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
@@ -41,7 +41,7 @@ export default function Inventory({ user, onLogout }) {
     item.itemName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Action: Restock (Specific Stock Update)
+  // Action: Restock
   const handleRestock = async (item) => {
     const addedStockStr = window.prompt(`Restocking "${item.itemName}".\nCurrent: ${item.stockLevel}\n\nAdd how many?`);
     if (!addedStockStr) return;
@@ -71,7 +71,7 @@ export default function Inventory({ user, onLogout }) {
     }
   };
 
-  // ✅ Action: Update Item (General Edit)
+  // Action: Update Item
   const handleUpdateItem = async (e) => {
     e.preventDefault();
     try {
@@ -88,9 +88,8 @@ export default function Inventory({ user, onLogout }) {
     }
   };
 
-  // ✅ Helper: Open Edit Modal
   const openEditModal = (item) => {
-    setEditingItem({ ...item }); // Copy item to avoid direct mutation
+    setEditingItem({ ...item }); 
     setShowEditModal(true);
   };
 
@@ -109,25 +108,29 @@ export default function Inventory({ user, onLogout }) {
 
   return (
     <AdminLayout user={user} onLogout={onLogout}>
+      
       {/* Top Stats Row */}
       <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        
+        {/* Stats Grid (1 Col Mobile -> 3 Col Desktop) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full md:w-auto">
-          <div className="bg-white px-6 py-3 rounded-lg border border-gray-200 shadow-sm">
-            <p className="text-sm text-gray-500">Total Items</p>
-            <p className="text-2xl font-bold">{totalItems}</p>
+          <div className="bg-white px-6 py-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between md:block">
+            <p className="text-sm text-gray-500 font-medium">Total Items</p>
+            <p className="text-2xl font-bold text-gray-800">{totalItems}</p>
           </div>
-          <div className="bg-yellow-50 px-6 py-3 rounded-lg border border-yellow-200 shadow-sm">
+          <div className="bg-yellow-50 px-6 py-4 rounded-xl border border-yellow-200 shadow-sm flex items-center justify-between md:block">
             <p className="text-sm text-yellow-700 font-medium">Low Stock</p>
-            <p className="text-2xl font-bold text-yellow-600">{lowStockCount}</p>
+            <p className="text-2xl font-bold text-yellow-700">{lowStockCount}</p>
           </div>
-          <div className="bg-green-50 px-6 py-3 rounded-lg border border-green-200 shadow-sm">
+          <div className="bg-green-50 px-6 py-4 rounded-xl border border-green-200 shadow-sm flex items-center justify-between md:block">
             <p className="text-sm text-green-700 font-medium">Total Value</p>
-            <p className="text-2xl font-bold text-green-600">₱{totalValue.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-green-700">₱{totalValue.toLocaleString()}</p>
           </div>
         </div>
 
-        <div className="flex gap-2 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
+        {/* Search & Add Button */}
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <div className="relative flex-1 sm:w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input 
               type="text" 
@@ -139,17 +142,19 @@ export default function Inventory({ user, onLogout }) {
           </div>
           <button 
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5" />
-            <span className="hidden sm:inline">Add Item</span>
+            <span>Add Item</span>
           </button>
         </div>
       </div>
 
-      {/* Inventory Table */}
+      {/* Inventory List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* DESKTOP TABLE (Hidden on Mobile) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -173,16 +178,15 @@ export default function Inventory({ user, onLogout }) {
                         <span className="text-sm font-medium text-gray-900">{item.itemName}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{item.stockLevel}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">₱{item.unitPrice}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 font-mono">{item.stockLevel}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">₱{item.unitPrice}</td>
                     <td className="px-6 py-4">
                       {isLowStock ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
-                          <AlertTriangle className="w-3 h-3" />
-                          Low Stock
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
+                          <AlertTriangle className="w-3 h-3" /> Low Stock
                         </span>
                       ) : (
-                        <span className="inline-block px-3 py-1 text-xs rounded-full bg-green-100 text-green-800 border border-green-200">
+                        <span className="inline-block px-2.5 py-0.5 text-xs rounded-full bg-green-100 text-green-800 border border-green-200">
                           In Stock
                         </span>
                       )}
@@ -190,15 +194,14 @@ export default function Inventory({ user, onLogout }) {
                     <td className="px-6 py-4 text-right flex justify-end items-center gap-2">
                       <button 
                         onClick={() => handleRestock(item)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium mr-2"
+                        className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-wide mr-2 bg-blue-50 px-3 py-1.5 rounded hover:bg-blue-100 transition-colors"
                       >
                         Restock
                       </button>
                       
-                      {/* ✅ Edit Button */}
                       <button 
                         onClick={() => openEditModal(item)}
-                        className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Edit Item"
                       >
                         <Pencil className="w-4 h-4" />
@@ -206,7 +209,7 @@ export default function Inventory({ user, onLogout }) {
 
                       <button 
                         onClick={() => handleDeleteItem(item._id, item.itemName)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete Item"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -225,68 +228,130 @@ export default function Inventory({ user, onLogout }) {
             </tbody>
           </table>
         </div>
+
+        {/* MOBILE CARD VIEW (Hidden on Desktop) */}
+        <div className="md:hidden divide-y divide-gray-100">
+            {filteredInventory.length > 0 ? filteredInventory.map((item) => {
+               const isLowStock = item.stockLevel < (item.lowStockThreshold || 10);
+               return (
+                 <div key={item._id} className="p-4 flex flex-col gap-3">
+                    <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-50 rounded-lg">
+                                <Package className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-900">{item.itemName}</h4>
+                                <p className="text-emerald-600 font-bold">₱{item.unitPrice}</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-1">
+                             <button 
+                                onClick={() => openEditModal(item)}
+                                className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg"
+                             >
+                                <Pencil className="w-5 h-5" />
+                             </button>
+                             <button 
+                                onClick={() => handleDeleteItem(item._id, item.itemName)}
+                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                             >
+                                <Trash2 className="w-5 h-5" />
+                             </button>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div>
+                             <p className="text-xs text-gray-500 uppercase tracking-wide font-bold mb-1">Stock Level</p>
+                             <div className="flex items-center gap-2">
+                                 <span className="text-lg font-mono font-bold">{item.stockLevel}</span>
+                                 {isLowStock ? (
+                                    <span className="text-xs text-yellow-600 font-medium flex items-center gap-1 bg-yellow-100 px-2 py-0.5 rounded-full">
+                                        <AlertTriangle className="w-3 h-3" /> Low
+                                    </span>
+                                 ) : (
+                                    <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-0.5 rounded-full">OK</span>
+                                 )}
+                             </div>
+                        </div>
+                        <button 
+                            onClick={() => handleRestock(item)}
+                            className="bg-white border border-blue-200 text-blue-600 px-4 py-2 rounded-lg text-sm font-bold shadow-sm active:scale-95 transition-transform"
+                        >
+                            + Restock
+                        </button>
+                    </div>
+                 </div>
+               );
+            }) : (
+                <div className="p-8 text-center text-gray-400">
+                    No items found.
+                </div>
+            )}
+        </div>
       </div>
 
       {/* Add Item Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md mx-4 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Add New Product</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden animate-fade-in">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="text-lg font-bold text-gray-800">Add New Product</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleAddItem} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
-                <input required type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.itemName} onChange={e => setNewItem({...newItem, itemName: e.target.value})} placeholder="e.g. Ariel Powder" />
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Item Name</label>
+                <input required type="text" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.itemName} onChange={e => setNewItem({...newItem, itemName: e.target.value})} placeholder="e.g. Ariel Powder" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₱)</label>
-                  <input required type="number" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.unitPrice} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value)})} />
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Price (₱)</label>
+                  <input required type="number" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.unitPrice} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value)})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Initial Stock</label>
-                  <input required type="number" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.stockLevel} onChange={e => setNewItem({...newItem, stockLevel: parseInt(e.target.value)})} />
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Initial Stock</label>
+                  <input required type="number" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.stockLevel} onChange={e => setNewItem({...newItem, stockLevel: parseInt(e.target.value)})} />
                 </div>
               </div>
-              <button type="submit" className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-                <Save className="w-4 h-4" /> Save Product
+              <button type="submit" className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium shadow-md">
+                <Save className="w-5 h-5" /> Save Product
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* ✅ Edit Item Modal */}
+      {/* Edit Item Modal */}
       {showEditModal && editingItem && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md mx-4 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Edit Product</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden animate-fade-in">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="text-lg font-bold text-gray-800">Edit Product</h3>
               <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleUpdateItem} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
-                <input required type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.itemName} onChange={e => setEditingItem({...editingItem, itemName: e.target.value})} />
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Item Name</label>
+                <input required type="text" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.itemName} onChange={e => setEditingItem({...editingItem, itemName: e.target.value})} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (₱)</label>
-                  <input required type="number" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.unitPrice} onChange={e => setEditingItem({...editingItem, unitPrice: parseFloat(e.target.value)})} />
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Price (₱)</label>
+                  <input required type="number" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.unitPrice} onChange={e => setEditingItem({...editingItem, unitPrice: parseFloat(e.target.value)})} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
-                  <input required type="number" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.stockLevel} onChange={e => setEditingItem({...editingItem, stockLevel: parseInt(e.target.value)})} />
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Current Stock</label>
+                  <input required type="number" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.stockLevel} onChange={e => setEditingItem({...editingItem, stockLevel: parseInt(e.target.value)})} />
                 </div>
               </div>
-              <button type="submit" className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-                <Save className="w-4 h-4" /> Update Product
+              <button type="submit" className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium shadow-md">
+                <Save className="w-5 h-5" /> Update Product
               </button>
             </form>
           </div>
