@@ -49,7 +49,7 @@ app.use(express.static(clientBuildPath));
 
 // The "Catch-All" Route: For any request that isn't an API route, 
 // send back the React index.html file.
-app.get('*', (req, res) => {
+app.get(/(.*)/, (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
