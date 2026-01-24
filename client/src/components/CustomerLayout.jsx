@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, ClipboardList, User, LogOut, Menu, X } from 'lucide-react';
 import Logo from './Logo';
+import ChatWidget from '../components/ChatWidget';
 
 const navItems = [
   { path: '/customer/dashboard', icon: Home, label: 'Dashboard' },
@@ -168,6 +169,7 @@ export default function CustomerLayout({ children, user, onLogout }) {
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in overflow-x-hidden">
         {children}
       </main>
+       <ChatWidget />
     </div>
   );
 }

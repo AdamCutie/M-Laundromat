@@ -13,7 +13,8 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 const machineRoutes = require('./routes/machineRoutes');
 const authRoutes = require('./routes/authRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
-const customerRoutes = require('./routes/customerRoutes'); // NEW
+const customerRoutes = require('./routes/customerRoutes'); 
+const chatRoutes = require('./routes/chatRoutes');
 
 // Configuration
 dotenv.config();
@@ -25,6 +26,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors());
+app.use('/api/chat', chatRoutes);
 
 // ============================================
 // API ROUTES

@@ -3,6 +3,7 @@ import { WashingMachine, Clock, Smartphone, ShieldCheck, ArrowRight, Menu, X } f
 import Logo from '../components/Logo'; // ✅ Using shared Logo component
 import Login from '../components/Login'; 
 import Register from '../components/Register';
+import ChatWidget from '../components/ChatWidget';
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -242,6 +243,7 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      <ChatWidget />
     </div>
   );
 }
