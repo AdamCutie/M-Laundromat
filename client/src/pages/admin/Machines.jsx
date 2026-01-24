@@ -2,28 +2,28 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout'; // Default fallback
 import machineService from '../../services/machineService';
 import LoadingScreen from '../../components/LoadingScreen';
-// Added Wind icon for Dryer section visualization
-import { Plus, Circle, WashingMachine, Power, Wrench, CheckCircle, Clock, Save, X, Trash2, Wind } from 'lucide-react';
+import { 
+  Plus, Circle, WashingMachine, Power, Wrench, 
+  CheckCircle, Clock, Save, X, Trash2, Wind 
+} from 'lucide-react';
 
-// ✅ TIMER COMPONENT
+// ==========================================
+// INTERNAL COMPONENT: TIMER
+// ==========================================
 function Timer({ startTime, onComplete }) {
-  const [timeLeft, setTimeLeft] = useState('');
+  const [timeLeft, setTimeLeft] = useState('--:--');
 
   useEffect(() => {
     const calculateTime = () => {
-      if (!startTime) {
-        setTimeLeft('--:--');
-        return;
-      }
+      if (!startTime) return;
       
-      const duration = 40 * 60 * 1000; // 40 minutes in milliseconds
+      const duration = 40 * 60 * 1000; // 40 minutes in ms
       const end = new Date(startTime).getTime() + duration;
       const now = new Date().getTime();
       const diff = end - now;
 
       if (diff <= 0) {
         setTimeLeft('Finishing...');
-        // ✅ Trigger the auto-finish logic
         if (onComplete) onComplete();
       } else {
         const minutes = Math.floor((diff / 1000 / 60) % 60);
@@ -33,24 +33,26 @@ function Timer({ startTime, onComplete }) {
     };
 
     calculateTime();
-    const interval = setInterval(calculateTime, 1000); // Update every second
+    const interval = setInterval(calculateTime, 1000);
     return () => clearInterval(interval);
   }, [startTime, onComplete]); 
 
   return (
-    <div className="flex items-center justify-center gap-2 text-blue-600 font-bold font-mono text-lg">
+    <div className="flex items-center justify-center gap-2 text-blue-600 font-bold font-mono text-lg animate-pulse">
       <Clock className="w-5 h-5" />
       {timeLeft}
     </div>
   );
 }
 
-// ✅ UPDATED: Accept 'Layout' prop. Defaults to AdminLayout if not passed.
+// ==========================================
+// MAIN COMPONENT
+// ==========================================
 export default function Machines({ user, onLogout, Layout = AdminLayout }) {
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ MODAL STATE
+  // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
   const [newMachine, setNewMachine] = useState({ machineNumber: '', type: 'Washer' });
 
@@ -69,35 +71,31 @@ export default function Machines({ user, onLogout, Layout = AdminLayout }) {
     }
   };
 
-  // 1. Handle Start/Stop (Daily Operations)
+  // ACTIONS
   const handleToggleRun = async (machine) => {
     try {
       await machineService.toggleStatus(machine._id, machine.status);
       fetchMachines();
     } catch (err) {
-      alert("Failed to update machine status");
+      alert("Failed to update status");
     }
   };
 
-  // 2. Handle Maintenance (Admin Only)
   const handleMaintenance = async (machine) => {
     try {
       const newStatus = machine.status === 'Maintenance' ? 'Available' : 'Maintenance';
-      
-      // Use explicit update if available, otherwise toggle
+      // Support both backend API styles (update vs toggle)
       if (machineService.updateMachine) {
          await machineService.updateMachine(machine._id, { status: newStatus });
       } else {
          await machineService.toggleStatus(machine._id, machine.status, newStatus); 
       }
-      
       fetchMachines();
     } catch (err) {
-      alert("Failed to change maintenance status.");
+      alert("Failed to update maintenance status.");
     }
   };
 
-  // ✅ ADD MACHINE FUNCTION
   const handleAddMachine = async (e) => {
     e.preventDefault();
     try {
@@ -106,132 +104,115 @@ export default function Machines({ user, onLogout, Layout = AdminLayout }) {
         type: newMachine.type,
         status: 'Available'
       });
-      
       alert("Machine Added Successfully!");
       setShowAddModal(false);
       setNewMachine({ machineNumber: '', type: 'Washer' });
       fetchMachines();
     } catch (err) {
-      // ✅ FIXED: Show the actual error from backend (e.g. Missing fields vs Duplicate)
       alert(err.response?.data?.message || "Error adding machine");
     }
   };
 
-  // ✅ DELETE MACHINE FUNCTION
   const handleDeleteMachine = async (id, number, status) => {
-    if (status === 'In Use') {
-      return alert("Cannot delete a machine while it is running!");
-    }
-    
-    if (!window.confirm(`Are you sure you want to permanently delete ${number}?`)) return;
+    if (status === 'In Use') return alert("Cannot delete a running machine!");
+    if (!window.confirm(`Permanently delete ${number}?`)) return;
 
     try {
       await machineService.deleteMachine(id);
-      setMachines(prev => prev.filter(m => m._id !== id)); // Optimistic update
+      setMachines(prev => prev.filter(m => m._id !== id));
     } catch (err) {
       alert("Failed to delete machine.");
     }
   };
 
-  // Calculate Stats
+  // CALCULATIONS
   const totalMachines = machines.length;
   const availableCount = machines.filter(m => m.status === 'Available').length;
   const maintenanceCount = machines.filter(m => m.status === 'Maintenance').length;
   const inUseCount = machines.filter(m => m.status === 'In Use').length;
 
-  // ✅ SEPARATE MACHINES BY TYPE
   const washers = machines.filter(m => m.type === 'Washer');
   const dryers = machines.filter(m => m.type === 'Dryer');
 
-  // ✅ HELPER FUNCTION TO RENDER CARDS (Avoids duplicating code)
+  // CARD RENDERER
   const renderMachineCard = (machine) => {
     const isAvailable = machine.status === 'Available';
     const isInUse = machine.status === 'In Use';
     const isMaintenance = machine.status === 'Maintenance';
 
     return (
-      <div key={machine._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md flex flex-col justify-between relative group">
+      <div key={machine._id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md flex flex-col justify-between relative group">
         
-        {/* Only Admin can Delete */}
+        {/* Delete Button (Visible always on mobile, Hover on desktop) */}
         {user.role === 'admin' && (
           <button 
             onClick={() => handleDeleteMachine(machine._id, machine.machineNumber, machine.status)}
-            className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10"
-            title="Delete Machine"
+            className="absolute top-3 right-3 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100 z-10"
           >
             <Trash2 className="w-4 h-4" />
           </button>
         )}
 
-        {/* Card Content */}
+        {/* Content */}
         <div>
-          <div className="flex items-center justify-between mb-4 pr-8">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${
-                isInUse ? 'bg-blue-100 text-blue-600' : 
-                isMaintenance ? 'bg-orange-100 text-orange-600' :
-                'bg-gray-100 text-gray-600'
-              }`}>
-                {/* Show Wind icon for Dryers, WashingMachine for Washers */}
-                {machine.type === 'Dryer' ? <Wind className="w-6 h-6" /> : <WashingMachine className="w-6 h-6" />}
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-800">{machine.machineNumber}</h3>
-                <p className="text-sm text-gray-500">{machine.type}</p>
-              </div>
+          <div className="flex items-center gap-4 mb-4">
+            {/* Icon Box */}
+            <div className={`p-3 rounded-xl flex-shrink-0 ${
+               isInUse ? 'bg-blue-100 text-blue-600' : 
+               isMaintenance ? 'bg-orange-100 text-orange-600' :
+               'bg-gray-100 text-gray-600'
+            }`}>
+              {machine.type === 'Dryer' ? <Wind className="w-6 h-6" /> : <WashingMachine className="w-6 h-6" />}
             </div>
-            <div className="flex items-center gap-2">
-              <Circle className={`w-3 h-3 fill-current ${
-                isAvailable ? 'text-green-500' :
-                isInUse ? 'text-blue-500' :
-                'text-orange-500'
-              }`} />
+            
+            {/* Text Info */}
+            <div>
+              <h3 className="text-lg font-bold text-gray-800 leading-none mb-1">{machine.machineNumber}</h3>
+              <div className="flex items-center gap-1.5">
+                <Circle className={`w-2 h-2 fill-current ${
+                  isAvailable ? 'text-emerald-500' : isInUse ? 'text-blue-500' : 'text-orange-500'
+                }`} />
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{machine.status}</span>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3 py-4 border-t border-b border-gray-50 my-2 min-h-[80px] flex items-center justify-center">
+          {/* Status / Timer Area */}
+          <div className="py-4 border-t border-b border-gray-50 my-2 min-h-[80px] flex items-center justify-center bg-gray-50/50 rounded-lg">
             {isInUse ? (
                <div className="text-center w-full">
-                 <span className="text-xs font-bold text-blue-600 uppercase tracking-wide block mb-2">Cycle In Progress</span>
-                 <Timer 
-                   startTime={machine.startTime} 
-                   onComplete={() => fetchMachines()} 
-                 />
+                 <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest block mb-1">Time Remaining</span>
+                 <Timer startTime={machine.startTime} onComplete={() => fetchMachines()} />
                </div>
             ) : isMaintenance ? (
-                <div className="text-center">
-                 <span className="text-xs font-bold text-orange-600 uppercase tracking-wide flex items-center gap-2 justify-center">
-                   <Wrench className="w-4 h-4" /> Under Repair
+               <div className="text-center">
+                 <span className="text-xs font-bold text-orange-600 uppercase tracking-wide flex items-center gap-1 justify-center">
+                   <Wrench className="w-3 h-3" /> Under Repair
                  </span>
-                 <p className="text-gray-400 text-xs mt-1">Technician notified</p>
                </div>
             ) : (
-              <div className="text-center text-gray-400 text-sm italic">
-                Ready for next customer
-              </div>
+              <span className="text-gray-400 text-xs italic">Ready for use</span>
             )}
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-2 flex gap-2">
+        {/* Buttons */}
+        <div className="mt-3 flex gap-2 h-10">
           {isMaintenance ? (
             <button 
               onClick={() => handleMaintenance(machine)}
-              className="w-full px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+              className="w-full h-full rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
             >
-              <CheckCircle className="w-4 h-4" />
-              Mark Repaired
+              <CheckCircle className="w-4 h-4" /> Available
             </button>
           ) : (
             <>
               <button 
                 onClick={() => handleToggleRun(machine)}
-                disabled={isInUse && false} 
-                className={`flex-1 px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2 ${
+                className={`flex-1 h-full rounded-lg transition-colors text-sm font-bold flex items-center justify-center gap-2 ${
                   isInUse 
-                  ? 'bg-red-50 text-red-600 hover:bg-red-100' 
-                  : 'bg-green-50 text-green-600 hover:bg-green-100'
+                  ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-100' 
+                  : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100'
                 }`}
               >
                 <Power className="w-4 h-4" />
@@ -241,126 +222,147 @@ export default function Machines({ user, onLogout, Layout = AdminLayout }) {
               {!isInUse && (
                 <button 
                   onClick={() => handleMaintenance(machine)}
-                  title="Set to Maintenance"
-                  className="px-3 py-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-orange-50 hover:text-orange-600 transition-colors border border-transparent hover:border-orange-200"
+                  className="px-3 h-full rounded-lg bg-white border border-gray-200 text-gray-400 hover:text-orange-600 hover:border-orange-200 transition-colors"
                 >
-                  <Wrench className="w-5 h-5" />
+                  <Wrench className="w-4 h-4" />
                 </button>
               )}
             </>
           )}
         </div>
-
       </div>
     );
   };
 
   if (loading) return <LoadingScreen />;
 
-  // ✅ USE DYNAMIC LAYOUT
   return (
     <Layout user={user} onLogout={onLogout}>
-      {/* Header Stats */}
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full md:w-auto">
-          {/* Stats Cards */}
-          <div className="bg-white px-6 py-3 rounded-lg border border-gray-200 shadow-sm">
-            <p className="text-sm text-gray-500">Total Machines</p>
-            <p className="text-2xl font-bold">{totalMachines}</p>
+      
+      {/* ✅ HEADER & STATS 
+        Mobile Optimization: Used 'grid-cols-2' so stats don't take up 
+        huge vertical space on phones (2x2 grid instead of 1x4 stack).
+      */}
+      <div className="mb-8 flex flex-col xl:flex-row justify-between items-start gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 w-full xl:w-auto">
+          
+          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center">
+            <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Total</p>
+            <p className="text-2xl font-black text-gray-800">{totalMachines}</p>
           </div>
-          <div className="bg-green-50 px-6 py-3 rounded-lg border border-green-200 shadow-sm">
-            <p className="text-sm text-green-700 font-medium">Available</p>
-            <p className="text-2xl font-bold text-green-600">{availableCount}</p>
+          
+          <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-center">
+            <p className="text-xs text-emerald-600 uppercase tracking-wider font-semibold">Free</p>
+            <p className="text-2xl font-black text-emerald-700">{availableCount}</p>
           </div>
-          <div className="bg-blue-50 px-6 py-3 rounded-lg border border-blue-200 shadow-sm">
-            <p className="text-sm text-blue-700 font-medium">In Use</p>
-            <p className="text-2xl font-bold text-blue-600">{inUseCount}</p>
+          
+          <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col justify-center">
+            <p className="text-xs text-blue-600 uppercase tracking-wider font-semibold">Running</p>
+            <p className="text-2xl font-black text-blue-700">{inUseCount}</p>
           </div>
-          <div className="bg-orange-50 px-6 py-3 rounded-lg border border-orange-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-1">
-               <Wrench className="w-4 h-4 text-orange-600" />
-               <p className="text-sm text-orange-700 font-medium">Maintenance</p>
-            </div>
-            <p className="text-2xl font-bold text-orange-600">{maintenanceCount}</p>
+          
+          <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 shadow-sm flex flex-col justify-center">
+            <p className="text-xs text-orange-600 uppercase tracking-wider font-semibold">Repair</p>
+            <p className="text-2xl font-black text-orange-700">{maintenanceCount}</p>
           </div>
         </div>
         
-        {/* Hide Add Button for Staff (Only show if user is admin) */}
+        {/* Add Button (Admin Only) - Full width on mobile for easier tapping */}
         {user.role === 'admin' && (
           <button 
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full xl:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all shadow-sm shadow-blue-200"
           >
             <Plus className="w-5 h-5" />
-            <span className="hidden sm:inline">Add Machine</span>
+            <span>Add Machine</span>
           </button>
         )}
       </div>
 
-      {/* ✅ WASHERS SECTION */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <div className="p-2 bg-blue-100 rounded-lg"><WashingMachine className="w-6 h-6 text-blue-600" /></div>
-            Washer Units
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {washers.length > 0 ? washers.map(renderMachineCard) : (
-                <p className="text-gray-400 italic col-span-full py-4">No Washer units available.</p>
-            )}
-        </div>
+      {/* ✅ SECTIONS */}
+      <div className="space-y-8">
+        
+        {/* WASHERS */}
+        <section>
+          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+             <span className="p-1.5 bg-blue-100 rounded text-blue-600"><WashingMachine className="w-5 h-5" /></span>
+             Washers
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+             {washers.length > 0 ? washers.map(renderMachineCard) : (
+                 <p className="col-span-full py-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-400">No washers found.</p>
+             )}
+          </div>
+        </section>
+
+        {/* DRYERS */}
+        <section>
+          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+             <span className="p-1.5 bg-orange-100 rounded text-orange-600"><Wind className="w-5 h-5" /></span>
+             Dryers
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+             {dryers.length > 0 ? dryers.map(renderMachineCard) : (
+                 <p className="col-span-full py-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-400">No dryers found.</p>
+             )}
+          </div>
+        </section>
       </div>
 
-      {/* ✅ DRYERS SECTION */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2 border-t border-gray-100 pt-8">
-            <div className="p-2 bg-orange-100 rounded-lg"><Wind className="w-6 h-6 text-orange-600" /></div>
-            Dryer Units
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dryers.length > 0 ? dryers.map(renderMachineCard) : (
-                <p className="text-gray-400 italic col-span-full py-4">No Dryer units available.</p>
-            )}
-        </div>
-      </div>
-
-      {/* Add Machine Modal */}
+      {/* MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md mx-4 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Add New Machine</h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-fade-in">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="text-lg font-bold text-gray-800">Add Machine</h3>
               <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
+            
             <form onSubmit={handleAddMachine} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Machine Name/Number</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Machine Number</label>
                 <input 
                   required
                   type="text" 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   value={newMachine.machineNumber}
                   onChange={e => setNewMachine({...newMachine, machineNumber: e.target.value})}
-                  placeholder="e.g. Washer 05"
+                  placeholder="e.g. Washer 01"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Machine Type</label>
-                <select 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                  value={newMachine.type}
-                  onChange={e => setNewMachine({...newMachine, type: e.target.value})}
-                >
-                  <option value="Washer">Washer</option>
-                  <option value="Dryer">Dryer</option>
-                </select>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Type</label>
+                <div className="grid grid-cols-2 gap-3">
+                   <button
+                     type="button"
+                     onClick={() => setNewMachine({...newMachine, type: 'Washer'})}
+                     className={`py-3 px-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                       newMachine.type === 'Washer' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'
+                     }`}
+                   >
+                     <WashingMachine className="w-6 h-6" />
+                     <span className="text-sm font-semibold">Washer</span>
+                   </button>
+                   
+                   <button
+                     type="button"
+                     onClick={() => setNewMachine({...newMachine, type: 'Dryer'})}
+                     className={`py-3 px-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                       newMachine.type === 'Dryer' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-gray-200 hover:bg-gray-50'
+                     }`}
+                   >
+                     <Wind className="w-6 h-6" />
+                     <span className="text-sm font-semibold">Dryer</span>
+                   </button>
+                </div>
               </div>
               <button 
                 type="submit" 
-                className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all"
               >
-                <Save className="w-4 h-4" /> Add Machine
+                <Save className="w-5 h-5" /> Save Machine
               </button>
             </form>
           </div>
