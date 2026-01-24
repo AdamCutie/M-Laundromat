@@ -2,6 +2,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./config/db');
 
 // Import Route Files
@@ -40,6 +41,17 @@ app.use('/api/orders', orderRoutes); // Staff/Admin
 app.use('/api/settings', settingRoutes); // View: Staff, Edit: Admin
 app.use('/api/inventory', inventoryRoutes); // View: Staff, Edit: Admin
 app.use('/api/machines', machineRoutes); // Staff/Admin
+
+// ✅ 2. SERVE REACT FRONTEND (Add this block)
+// Check if we are in production (or if the client/dist folder exists)
+const clientBuildPath = path.join(__dirname, '../client/dist');
+app.use(express.static(clientBuildPath));
+
+// The "Catch-All" Route: For any request that isn't an API route, 
+// send back the React index.html file.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
+});
 
 // ============================================
 // TEST ROUTE
