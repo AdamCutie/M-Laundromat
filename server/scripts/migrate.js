@@ -49,32 +49,17 @@ const migrate = async () => {
     console.log('   ✅ User roles updated\n');
 
     // ============================================
-    // STEP 2: Create admin account (if none exists)
+    // STEP 2: Check for admin account (Verification Only)
     // ============================================
     console.log('📝 Step 2: Checking for admin account...');
-    
     const adminExists = await User.findOne({ role: 'admin' });
     
-    if (!adminExists) {
-      console.log('   ⚠️  No admin found. Creating default admin...');
-      
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash('admin123', salt);
-      
-      await User.create({
-        username: 'admin',
-        password: hashedPassword,
-        role: 'admin',
-        isActive: true
-      });
-      
-      console.log('   ✅ Admin created!');
-      console.log('   📋 Username: admin');
-      console.log('   📋 Password: admin123');
-      console.log('   ⚠️  CHANGE THIS PASSWORD IMMEDIATELY!\n');
-    } else {
-      console.log('   ✅ Admin account already exists');
+    if (adminExists) {
+      console.log('   ✅ Admin account found.');
       console.log(`   👤 Admin username: ${adminExists.username}\n`);
+    } else {
+      console.log('   ⚠️  No admin account found.');
+      console.log('       To create one, use the registration page or add manually to DB.\n');
     }
 
     // ============================================

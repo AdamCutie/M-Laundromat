@@ -1,30 +1,30 @@
 import React, { useContext, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import AuthContext, { AuthProvider } from './context/AuthContext';
-import LandingPage from './pages/LandingPage';
+import AuthContext, { AuthProvider } from './context/AuthContext.jsx';
+import LandingPage from './pages/LandingPage.jsx';
 // ✅ Import at top
-import StaffLayout from './components/StaffLayout'; 
+import StaffLayout from './components/StaffLayout.jsx'; 
 
 // --- LAZY LOAD COMPONENTS ---
 // Note: Login/Register are now imported inside LandingPage, 
 // so we don't strictly need them here unless used elsewhere.
 
 // Admin Pages
-const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
-const AdminInventory = lazy(() => import('./pages/admin/Inventory'));
-const AdminMachines = lazy(() => import('./pages/admin/Machines'));
-const AdminUsers = lazy(() => import('./pages/admin/Users'));
-const AdminReports = lazy(() => import('./pages/admin/Reports'));
-const AdminSettings = lazy(() => import('./pages/admin/Settings'));
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard.jsx'));
+const AdminInventory = lazy(() => import('./pages/admin/Inventory.jsx'));
+const AdminMachines = lazy(() => import('./pages/admin/Machines.jsx'));
+const AdminUsers = lazy(() => import('./pages/admin/Users.jsx'));
+const AdminReports = lazy(() => import('./pages/admin/Reports.jsx'));
+const AdminSettings = lazy(() => import('./pages/admin/Settings.jsx'));
 
 // Staff Pages
-const StaffPOS = lazy(() => import('./pages/staff/POS'));
-const StaffOrders = lazy(() => import('./pages/staff/Orders'));
+const StaffPOS = lazy(() => import('./pages/staff/POS.jsx'));
+const StaffOrders = lazy(() => import('./pages/staff/Orders.jsx'));
 
 // Customer Pages
-const CustomerDashboard = lazy(() => import('./pages/customer/Dashboard'));
-const CustomerOrders = lazy(() => import('./pages/customer/Orders'));
-const CustomerProfile = lazy(() => import('./pages/customer/Profile'));
+const CustomerDashboard = lazy(() => import('./pages/customer/Dashboard.jsx'));
+const CustomerOrders = lazy(() => import('./pages/customer/Orders.jsx'));
+const CustomerProfile = lazy(() => import('./pages/customer/Profile.jsx'));
 
 // --- CONSTANTS ---
 const ROLES = {
