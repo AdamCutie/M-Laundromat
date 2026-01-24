@@ -50,9 +50,6 @@ export default function CustomerProfile({ onLogout }) {
       if (response.data) {
         login(response.data.username, null);
         localStorage.setItem('user', JSON.stringify(response.data));
-        
-        // Soft reload to update UI without full refresh if possible, 
-        // or keep window.location.reload() if strictly needed for deep context updates
         window.location.reload(); 
       }
 
@@ -65,25 +62,24 @@ export default function CustomerProfile({ onLogout }) {
     }
   };
 
-  // Helper to check if phone is missing
   const isPhoneMissing = !formData.phoneNumber;
 
   return (
     <CustomerLayout user={user} onLogout={onLogout}>
       
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto px-0 md:px-4">
         
         {/* Header Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Account Settings</h1>
-          <p className="text-gray-500 mt-2 text-sm sm:text-base">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Account Settings</h1>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">
             Manage your personal information and delivery preferences.
           </p>
         </div>
 
-        {/* 🚀 IMPROVEMENT: Phone Number Alert Banner */}
+        {/* Alert Banner */}
         {isPhoneMissing && (
-          <div className="mb-8 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg shadow-sm animate-fade-in">
+          <div className="mb-6 md:mb-8 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg shadow-sm animate-fade-in">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-amber-100 rounded-full text-amber-600 shrink-0">
                 <Smartphone className="w-5 h-5" />
@@ -99,7 +95,7 @@ export default function CustomerProfile({ onLogout }) {
           </div>
         )}
 
-        {/* Status Message Toast */}
+        {/* Status Message */}
         {message.text && (
           <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 shadow-sm border animate-fade-in ${
             message.type === 'success' 
@@ -117,16 +113,15 @@ export default function CustomerProfile({ onLogout }) {
         {/* Main Form Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           
-          {/* Card Header */}
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center gap-2">
             <User className="w-4 h-4 text-indigo-500" />
             <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Personal Details</h2>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
+          <form onSubmit={handleSubmit} className="p-5 md:p-8 space-y-6 md:space-y-8">
             
-            {/* Read-Only Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Top Row (Name & Email) - Stacks on Mobile */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Full Name</label>
                 <div className="relative group">
@@ -158,15 +153,15 @@ export default function CustomerProfile({ onLogout }) {
 
             <hr className="border-gray-100" />
 
-            {/* Critical Info Section */}
+            {/* Bottom Row (Phone & Address) */}
             <div className="space-y-6">
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-wrap justify-between items-center gap-2">
                   <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
                     <Phone className="w-4 h-4 text-indigo-600" />
                     Phone Number
                   </label>
-                  <span className="text-xs px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md font-medium">
+                  <span className="text-[10px] uppercase font-bold px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md tracking-wide">
                     Crucial for Tracking
                   </span>
                 </div>
@@ -183,8 +178,8 @@ export default function CustomerProfile({ onLogout }) {
                       : 'border-gray-300 focus:ring-indigo-500'
                   }`}
                 />
-                <p className="text-xs text-gray-500 flex items-start gap-1.5 mt-2">
-                  <Info className="w-3 h-3 mt-0.5 text-indigo-500" />
+                <p className="text-xs text-gray-500 flex items-start gap-1.5 mt-2 leading-tight">
+                  <Info className="w-3 h-3 mt-0.5 text-indigo-500 shrink-0" />
                   Use the same number you provide to the staff at the laundromat counter.
                 </p>
               </div>
@@ -206,21 +201,24 @@ export default function CustomerProfile({ onLogout }) {
             </div>
 
             {/* Action Footer */}
-            <div className="pt-4 flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4">
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors text-sm"
-              >
-                Discard Changes
-              </button>
+            <div className="pt-4 flex flex-col md:flex-row justify-end gap-3 md:gap-4">
+              {/* Save Button (First on Mobile for better UX) */}
               <button 
                 type="submit"
                 disabled={loading}
-                className="flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 active:transform active:scale-95 transition-all shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed font-medium text-sm"
+                className="order-1 md:order-2 flex items-center justify-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-lg shadow-indigo-200 disabled:opacity-70 disabled:cursor-not-allowed font-medium text-sm w-full md:w-auto"
               >
                 {loading ? <Loader className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                 {loading ? 'Saving...' : 'Save Changes'}
+              </button>
+
+              {/* Discard Button (Second on Mobile) */}
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="order-2 md:order-1 px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors text-sm w-full md:w-auto text-center"
+              >
+                Discard Changes
               </button>
             </div>
 
