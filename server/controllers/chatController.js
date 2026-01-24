@@ -66,7 +66,7 @@ exports.chatWithGemini = async (req, res) => {
 
     // 3. Initialize Model
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-flash-latest", //gemini-flash-lite-latest
+      model: "gemini-flash-lite-latest", //gemini-flash-latest
       systemInstruction: systemInstruction 
     });
 

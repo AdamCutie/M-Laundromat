@@ -46,13 +46,11 @@ export default function ChatWidget() {
     setIsLoading(true);
 
     try {
-      // 2. Prepare History (Filter out the Welcome Message for API)
-      const apiHistory = newHistory
-        .filter((_, index) => index !== 0) 
-        .map(msg => ({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.text }]
-        }));
+      // 2. ✅ FIXED: Send ALL messages (backend will filter welcome message)
+      const apiHistory = newHistory.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }]
+      }));
 
       // 3. Call API
       const data = await chatService.sendMessage(userMessage, apiHistory);
@@ -60,18 +58,37 @@ export default function ChatWidget() {
       // 4. Add AI Response
       setMessages(prev => [...prev, { role: 'model', text: data.reply }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'model', text: "I'm having trouble reaching the server. Please check your connection." }]);
+      console.error('Chat error:', error); // ✅ Added error logging
+      
+      // ✅ IMPROVED: Handle different error types
+      let errorMessage = "I'm having trouble right now. Please try again in a moment.";
+      
+      if (error.response?.status === 429) {
+        errorMessage = "I've reached my chat limit for now. Please try again in a few minutes! 🙏";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      setMessages(prev => [...prev, { role: 'model', text: errorMessage }]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ✅ IMPROVED: Reset to initial state properly
+  const handleReset = () => {
+    setMessages([
+      { 
+        role: 'model', 
+        text: "Hi! I'm M-Bot 🤖. I can calculate laundry prices or answer questions about our services. Ask me anything!" 
+      }
+    ]);
+    setInput('');
+  };
+
   return (
     <>
-      {/* CHAT WINDOW CONTAINER 
-        - Mobile: fixed inset-0 (Full Screen) with z-index 60 (above everything)
-        - Desktop (sm): fixed bottom-24 right-6 (Floating Bubble)
-      */}
+      {/* CHAT WINDOW CONTAINER */}
       <div className={`
         fixed z-[60] transition-all duration-300 ease-in-out
         ${isOpen 
@@ -100,11 +117,19 @@ export default function ChatWidget() {
             </div>
           </div>
           <div className="flex gap-2">
-              <button onClick={() => setMessages([messages[0]])} className="p-2 hover:bg-white/20 rounded-full transition-colors" title="Reset Chat">
+              <button 
+                onClick={handleReset} 
+                className="p-2 hover:bg-white/20 rounded-full transition-colors" 
+                title="Reset Chat"
+                type="button" // ✅ Added type="button"
+              >
                   <RefreshCw className="w-5 h-5" />
               </button>
-              <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/20 rounded-full transition-colors">
-                  {/* Show Down Arrow on Mobile (Close), Minimize on Desktop */}
+              <button 
+                onClick={() => setIsOpen(false)} 
+                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                type="button" // ✅ Added type="button"
+              >
                   <ChevronDown className="w-6 h-6 sm:hidden" /> 
                   <Minimize2 className="w-5 h-5 hidden sm:block" />
               </button>
@@ -122,7 +147,8 @@ export default function ChatWidget() {
                   : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
                 }
               `}>
-                {msg.text}
+                {/* ✅ IMPROVED: Preserve line breaks and formatting */}
+                <div className="whitespace-pre-wrap break-words">{msg.text}</div>
               </div>
             </div>
           ))}
@@ -132,8 +158,8 @@ export default function ChatWidget() {
             <div className="flex justify-start">
               <div className="bg-white p-3 rounded-2xl rounded-bl-none border border-gray-100 shadow-sm flex gap-1 items-center">
                 <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-75"></div>
-                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce delay-150"></div>
+                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
               </div>
             </div>
           )}
@@ -147,7 +173,8 @@ export default function ChatWidget() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask M-Bot..." 
-            className="flex-1 px-4 py-3 sm:py-2 bg-gray-100 border-transparent focus:bg-white border focus:border-indigo-300 rounded-full outline-none text-base sm:text-sm transition-all"
+            disabled={isLoading} // ✅ Added: Disable during loading
+            className="flex-1 px-4 py-3 sm:py-2 bg-gray-100 border-transparent focus:bg-white border focus:border-indigo-300 rounded-full outline-none text-base sm:text-sm transition-all disabled:opacity-50"
           />
           <button 
             type="submit"
@@ -159,7 +186,7 @@ export default function ChatWidget() {
         </form>
       </div>
 
-      {/* FLOATING BUTTON (Visible when chat is closed) */}
+      {/* FLOATING BUTTON */}
       <div className={`fixed bottom-6 right-6 z-50 ${isOpen ? 'hidden sm:flex' : 'flex'}`}>
         <button 
           onClick={() => setIsOpen(!isOpen)}
@@ -169,6 +196,7 @@ export default function ChatWidget() {
             transition-all duration-300 hover:scale-110 active:scale-95
             ${isOpen ? 'bg-gray-800 rotate-90' : 'bg-white'}
           `}
+          type="button" // ✅ Added type="button"
         >
           {isOpen ? (
             <X className="w-6 h-6 text-white" />
