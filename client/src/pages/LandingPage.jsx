@@ -91,7 +91,7 @@ export default function LandingPage() {
 
               {/* 2. The Modern Wordmark */}
               <span className="font-[Outfit,sans-serif] text-2xl font-extrabold tracking-tight text-gray-900">
-                M-Laundr
+                M Laundr
                 {/* The "o" matches the cyan in your image background */}
                 <span className="text-cyan-500 inline-block group-hover:animate-bounce">o</span>
                 -Mat
@@ -214,7 +214,7 @@ export default function LandingPage() {
       <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose M-Laundromat?</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose M Laundromat?</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">We combine premium cleaning technology with a seamless digital experience to give you back your weekends.</p>
           </div>
 
@@ -242,9 +242,6 @@ export default function LandingPage() {
       <footer className="bg-gray-900 text-white py-12 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2">
-            <div className="bg-white/10 p-2 rounded-lg">
-              <WashingMachine className="w-6 h-6" />
-            </div>
             <div>
               <span className="font-bold text-xl tracking-tight block">M Laundro-Mat</span>
               <span className="text-xs text-gray-400">© 2026 All rights reserved.</span>

@@ -35,7 +35,7 @@ export default function CustomerLayout({ children, user, onLogout }) {
 
               {/* 2. The Modern Wordmark */}
               <span className="font-[Outfit,sans-serif] text-xl font-extrabold tracking-tight text-gray-900">
-                M-Laundr
+                M Laundr
                 {/* The "o" matches the cyan in your image background */}
                 <span className="text-cyan-500 inline-block group-hover:animate-bounce">o</span>
                 -Mat

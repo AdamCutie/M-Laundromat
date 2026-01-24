@@ -82,7 +82,7 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
              <Logo className="scale-110" /> 
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Create Account</h1>
-          <p className="text-gray-500 mt-2">Join M-Laundromat today!</p>
+          <p className="text-gray-500 mt-2">Join M Laundromat today!</p>
         </div>
 
         {/* Error Message */}

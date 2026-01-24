@@ -16,7 +16,7 @@ export default function Logo({ className = "" }) {
 
       {/* 3. The Modern Wordmark */}
       <span className="font-[Outfit,sans-serif] text-xl font-extrabold tracking-tight text-gray-900">
-        M-Laundr
+        M Laundr
         <span className="text-cyan-500 inline-block group-hover:animate-bounce">o</span>
         -Mat
       </span>
