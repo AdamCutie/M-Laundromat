@@ -191,7 +191,7 @@ export default function ChatWidget() {
             hover:scale-105 active:scale-95
             
             /* --- RESIZING LOGIC --- */
-            /* Mobile: h-12 (48px) | Desktop: h-16 (64px) */
+            /* 'pl-1 pr-4 py-1 h-12 sm:pl-2 sm:pr-6 sm:py-2 sm:h-16 rounded-full' */
             /* Padding: Mobile is tighter (pr-3) so white bg matches the small logo */
             ${isOpen 
                ? 'w-12 h-12 sm:w-14 sm:h-14 rounded-full justify-center' 

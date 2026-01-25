@@ -1,6 +1,6 @@
 const Setting = require('../models/Setting');
 
-// @desc    Get current system settings (prices)
+// @desc    Get current system settings (prices + announcements)
 // @route   GET /api/settings
 const getSettings = async (req, res) => {
   try {
@@ -10,10 +10,14 @@ const getSettings = async (req, res) => {
     // 2. If no settings exist yet, create default ones
     if (!settings) {
       settings = await Setting.create({
+        // Pricing defaults
         fullServicePerKg: 25,
         minWeight: 5,
         selfServiceWash: 45,
-        selfServiceDry: 65
+        selfServiceDry: 65,
+        // Announcement defaults (Explicitly setting them ensures they exist)
+        announcementText: "Welcome to M-Laundromat!",
+        showAnnouncement: true
       });
     }
 
@@ -23,18 +27,28 @@ const getSettings = async (req, res) => {
   }
 };
 
-// @desc    Update prices
+// @desc    Update settings (Prices AND Announcement)
 // @route   PUT /api/settings
 const updateSettings = async (req, res) => {
   try {
-    const { fullServicePerKg, minWeight, selfServiceWash, selfServiceDry } = req.body;
+    // 1. Destructure ALL fields from the request (Pricing + Announcement)
+    const { 
+      fullServicePerKg, 
+      minWeight, 
+      selfServiceWash, 
+      selfServiceDry, 
+      announcementText,  // <--- Added this
+      showAnnouncement   // <--- Added this
+    } = req.body;
     
-    // Update the first document found (upsert: true means create if missing)
+    // 2. Update the document
     const settings = await Setting.findOneAndUpdate({}, {
       fullServicePerKg,
       minWeight,
       selfServiceWash,
       selfServiceDry,
+      announcementText,  // <--- Save to DB
+      showAnnouncement,  // <--- Save to DB
       lastUpdated: Date.now()
     }, { new: true, upsert: true });
 

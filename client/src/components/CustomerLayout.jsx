@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, ClipboardList, User, LogOut, Menu, X } from 'lucide-react';
 import Logo from './Logo';
 import ChatWidget from '../components/ChatWidget';
+import AnnouncementBar from '../components/AnnouncementBar';
 
 const navItems = [
   { path: '/customer/dashboard', icon: Home, label: 'Dashboard' },
@@ -87,6 +88,10 @@ export default function CustomerLayout({ children, user, onLogout }) {
 
           </div>
         </div>
+
+        {/* ✅ ADD ANNOUNCEMENT BAR HERE (Top of everything) */}
+      <AnnouncementBar />
+      
       </nav>
 
       {/* =========================================================

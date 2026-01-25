@@ -5,7 +5,7 @@ const { getSettings, updateSettings } = require('../controllers/settingControlle
 const { protect, staffOrAdmin, adminOnly } = require('../middleware/authMiddleware');
 
 // Staff can view prices, only admin can change them
-router.get('/', protect, staffOrAdmin, getSettings);
+router.get('/', getSettings);
 router.put('/', protect, adminOnly, updateSettings);
 
 module.exports = router;

@@ -9,6 +9,10 @@ const SettingSchema = new mongoose.Schema({
   selfServiceWash: { type: Number, default: 45 },  // Price per wash cycle
   selfServiceDry: { type: Number, default: 65 },   // Price per dry cycle
 
+  //  FOR ANNOUNCEMENT:
+  announcementText: { type: String, default: "Welcome to M-Laundromat!" },
+  showAnnouncement: { type: Boolean, default: true },
+
   // System Info
   lastUpdated: { type: Date, default: Date.now }
 });
