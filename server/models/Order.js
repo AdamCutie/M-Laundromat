@@ -51,7 +51,7 @@ const OrderSchema = new mongoose.Schema({
   // ============================================
   
   // Which machines are being used
-  machines: [{
+  machineIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Machine'
   }],
