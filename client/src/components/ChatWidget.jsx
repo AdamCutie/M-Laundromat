@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import chatService from '../services/chatService';
 import logo from '../assets/logo.png'; 
-import { Send, X, Minimize2, RefreshCw, Sparkles, ChevronDown } from 'lucide-react';
+import { Send, X, Minimize2, RefreshCw, Sparkles, ChevronDown, MessageCircle } from 'lucide-react';
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -117,19 +117,10 @@ export default function ChatWidget() {
             </div>
           </div>
           <div className="flex gap-2">
-              <button 
-                onClick={handleReset} 
-                className="p-2 hover:bg-white/20 rounded-full transition-colors" 
-                title="Reset Chat"
-                type="button" // ✅ Added type="button"
-              >
+              <button onClick={handleReset} className="p-2 hover:bg-white/20 rounded-full transition-colors" title="Reset Chat" type="button">
                   <RefreshCw className="w-5 h-5" />
               </button>
-              <button 
-                onClick={() => setIsOpen(false)} 
-                className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                type="button" // ✅ Added type="button"
-              >
+              <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/20 rounded-full transition-colors" type="button">
                   <ChevronDown className="w-6 h-6 sm:hidden" /> 
                   <Minimize2 className="w-5 h-5 hidden sm:block" />
               </button>
@@ -147,13 +138,11 @@ export default function ChatWidget() {
                   : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none'
                 }
               `}>
-                {/* ✅ IMPROVED: Preserve line breaks and formatting */}
                 <div className="whitespace-pre-wrap break-words">{msg.text}</div>
               </div>
             </div>
           ))}
           
-          {/* Typing Indicator */}
           {isLoading && (
             <div className="flex justify-start">
               <div className="bg-white p-3 rounded-2xl rounded-bl-none border border-gray-100 shadow-sm flex gap-1 items-center">
@@ -186,34 +175,69 @@ export default function ChatWidget() {
         </form>
       </div>
 
-      {/* FLOATING BUTTON */}
-      <div className={`fixed bottom-6 right-6 z-50 ${isOpen ? 'hidden sm:flex' : 'flex'}`}>
+      {/* ===========================================
+        FLOATING BUTTON (LOGO ALWAYS VISIBLE)
+        RESIZED & TIGHTENED FOR MOBILE
+        ===========================================
+      */}
+      <div className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 ${isOpen ? 'hidden sm:flex' : 'flex'}`}>
         <button 
           onClick={() => setIsOpen(!isOpen)}
+          type="button"
           className={`
-            group relative flex items-center justify-center
-            w-14 h-14 rounded-full shadow-2xl border-2 border-white/50
-            transition-all duration-300 hover:scale-110 active:scale-95
-            ${isOpen ? 'bg-gray-800 rotate-90' : 'bg-white'}
+            group relative flex items-center gap-2 sm:gap-3
+            shadow-2xl border-2 border-white/50 bg-white
+            transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+            hover:scale-105 active:scale-95
+            
+            /* --- RESIZING LOGIC --- */
+            /* Mobile: h-12 (48px) | Desktop: h-16 (64px) */
+            /* Padding: Mobile is tighter (pr-3) so white bg matches the small logo */
+            ${isOpen 
+               ? 'w-12 h-12 sm:w-14 sm:h-14 rounded-full justify-center' 
+               : 'pl-1 pr-3 py-1 h-12 sm:pl-2 sm:pr-6 sm:py-2 sm:h-16 rounded-full'
+            }
           `}
-          type="button" // ✅ Added type="button"
         >
-          {isOpen ? (
-            <X className="w-6 h-6 text-white" />
-          ) : (
-            <>
+            {/* 1. LOGO CONTAINER */}
+            {/* Mobile: w-10 h-10 (40px) | Desktop: w-12 h-12 (48px) */}
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12 shrink-0">
               <img 
                 src={logo} 
                 alt="Chat" 
-                className="w-full h-full rounded-full object-cover" 
+                className={`w-full h-full rounded-full object-cover border border-gray-100 shadow-sm transition-opacity ${isOpen ? 'opacity-80' : 'opacity-100'}`} 
               />
-              {/* Notification Badge */}
-              <span className="absolute top-0 right-0 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-              </span>
-            </>
-          )}
+              
+              {!isOpen && (
+                <span className="absolute top-0 right-0 flex h-3 w-3 sm:h-3.5 sm:w-3.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 sm:h-3.5 sm:w-3.5 bg-green-500 border-2 border-white"></span>
+                </span>
+              )}
+
+              {/* Overlay Icon (Desktop Only) */}
+              {isOpen && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-full">
+                   <Minimize2 className="w-6 h-6 text-white drop-shadow-md" />
+                </div>
+              )}
+            </div>
+
+            {/* 2. TEXT LABEL */}
+            {!isOpen && (
+              <div className="flex flex-col items-start animate-fade-in">
+                {/* KEY FIX: 
+                   Mobile: "Chat" (Short, so white bg is small)
+                   Desktop: "Chat with M-Bot" (Long)
+                */}
+                <span className="font-bold text-gray-800 text-xs sm:text-sm leading-tight whitespace-nowrap">
+                  Chat <span className="hidden sm:inline">with M-Bot</span>
+                </span>
+                <span className="text-[10px] text-green-600 font-medium leading-tight flex items-center gap-1">
+                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online
+                </span>
+              </div>
+            )}
         </button>
       </div>
     </>
