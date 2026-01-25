@@ -21,6 +21,9 @@ export default function POS({ user, onLogout }) {
   const [machines, setMachines] = useState([]); 
   const [selectedMachines, setSelectedMachines] = useState([]); 
   const [loading, setLoading] = useState(true);
+  
+  // ✅ FIX 1: Add State for Min Weight so it is accessible everywhere
+  const [minWeight, setMinWeight] = useState(5); 
 
   // Mobile State
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
@@ -38,11 +41,22 @@ export default function POS({ user, onLogout }) {
         machineService.getMachines()
       ]);
 
+      // ✅ FIX 2: Save the minimum weight to state
+      const currentMinWeight = settingsData.minWeight || 5;
+      setMinWeight(currentMinWeight);
+
       // 1. Service Menu
       const serviceOptions = [
         { id: 'wash', name: 'Wash Cycle', price: settingsData.selfServiceWash, category: 'Self-Service', icon: Droplets },
         { id: 'dry', name: 'Dry Cycle', price: settingsData.selfServiceDry, category: 'Self-Service', icon: Wind },
-        { id: 'full', name: 'Full Service (Min 5kg)', price: settingsData.fullServicePerKg, category: 'Full-Service', icon: ShoppingBag },
+        { 
+          id: 'full', 
+          // ✅ FIX 3: Make the label dynamic
+          name: `Full Service (Min ${currentMinWeight}kg)`, 
+          price: settingsData.fullServicePerKg, 
+          category: 'Full-Service', 
+          icon: ShoppingBag 
+        },
       ];
 
       // 2. Add-ons
@@ -71,7 +85,9 @@ export default function POS({ user, onLogout }) {
 
     setCart(prev => {
       const existing = prev.find(item => item.id === service.id);
-      const initialQty = service.id === 'full' ? 5 : 1;
+      
+      // ✅ FIX 4: Use state variable instead of hardcoded '5'
+      const initialQty = service.id === 'full' ? minWeight : 1;
 
       if (existing) {
         if (service.type === 'product' && existing.qty >= service.stock) {
@@ -88,13 +104,18 @@ export default function POS({ user, onLogout }) {
     setCart(prev => prev.map(item => {
       if (item.id === id) {
         const newQty = item.qty + change;
-        if (item.id === 'full' && newQty < 5) return item; 
+        
+        // ✅ FIX 5: Use state variable for validation
+        if (item.id === 'full' && newQty < minWeight) return item; 
+        
         if (item.type === 'product' && change > 0 && newQty > item.stock) return item; 
         return newQty > 0 ? { ...item, qty: newQty } : item;
       }
       return item;
     }));
   };
+
+  // ... (Rest of your code remains the same: removeFromCart, handleSelectMachine, etc.)
 
   const removeFromCart = (id) => {
     setCart(prev => prev.filter(item => item.id !== id));
@@ -285,7 +306,8 @@ export default function POS({ user, onLogout }) {
                   <div>
                     <p className="font-medium text-gray-800">{service.name}</p>
                     <p className="text-emerald-600 font-bold">₱{service.price}</p>
-                    {service.id === 'full' && <p className="text-xs text-orange-500 font-semibold">Min 5kg</p>}
+                    {/* ✅ FIX 6: Use dynamic min weight in display */}
+                    {service.id === 'full' && <p className="text-xs text-orange-500 font-semibold">Min {minWeight}kg</p>}
                   </div>
                 </button>
               ))}
