@@ -88,7 +88,10 @@ export default function Dashboard({ user, onLogout }) {
   }, [orders, dateRange]);
 
   // --- 2. STATS CALCULATIONS ---
-  const revenue = filteredOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+  // ✅ FIX: Only count revenue if paymentStatus is 'Paid'
+  const revenue = filteredOrders.reduce((sum, order) => {
+    return order.paymentStatus === 'Paid' ? sum + order.totalPrice : sum;
+  }, 0);
   const orderCount = filteredOrders.length;
   const avgOrderValue = orderCount > 0 ? revenue / orderCount : 0;
   const activeMachines = machines.filter(m => m.status === 'In Use').length;

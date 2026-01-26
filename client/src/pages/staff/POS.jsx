@@ -29,6 +29,7 @@ export default function POS({ user, onLogout }) {
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   
   // ✅ LOCKS (Prevent Double Hits)
+  const [paymentStatus, setPaymentStatus] = useState('Unpaid'); // Default to Unpaid
   const [processingId, setProcessingId] = useState(null); // Locks specific "Add" button
   const [isSubmitting, setIsSubmitting] = useState(false); // Locks "Checkout" button
 
@@ -182,7 +183,8 @@ export default function POS({ user, onLogout }) {
       serviceType: finalServiceType,
       washCount, dryCount, weight, addOns,
       totalPrice: total,
-      machineIds: selectedMachines 
+      machineIds: selectedMachines,
+      paymentStatus 
     };
 
     try {
@@ -257,7 +259,29 @@ export default function POS({ user, onLogout }) {
             <span className="truncate"><strong>Machines:</strong> {machines.filter(m => selectedMachines.includes(m._id)).map(m => m.machineNumber).join(', ')}</span>
           </div>
         )}
-        
+        {/* ✅ PAYMENT STATUS TOGGLE */}
+        <div className="flex bg-gray-200 rounded-lg p-1 mb-4">
+          <button
+            onClick={() => setPaymentStatus('Unpaid')}
+            className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${
+              paymentStatus === 'Unpaid' 
+                ? 'bg-white text-red-500 shadow-sm' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Pay Later (Unpaid)
+          </button>
+          <button
+            onClick={() => setPaymentStatus('Paid')}
+            className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${
+              paymentStatus === 'Paid' 
+                ? 'bg-white text-emerald-600 shadow-sm' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Pay Now (Paid)
+          </button>
+        </div>
         <div className="flex justify-between items-end mb-3">
           <span className="text-xs text-gray-500 font-medium">Total Amount</span>
           <span className="text-xl font-bold text-gray-900 tracking-tight">₱{total.toFixed(2)}</span>

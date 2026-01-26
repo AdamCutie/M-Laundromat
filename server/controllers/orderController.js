@@ -21,7 +21,8 @@ const createOrder = async (req, res) => {
       dryCount,
       totalPrice,
       addOns = [],     // ✅ Sanitization: Default to empty array
-      machineIds = []  // ✅ Sanitization: Default to empty array
+      machineIds = [],  // ✅ Sanitization: Default to empty array
+      paymentStatus
     } = req.body;
 
     // 1. Validation
@@ -64,7 +65,7 @@ const createOrder = async (req, res) => {
     const [newOrder] = await Order.create([{
       customerName, customerId, phoneNumber: customerPhone || '',
       serviceType, weight, washCount, dryCount, totalPrice,
-      addOns, status: initialStatus, machineIds, 
+      addOns, status: initialStatus, paymentStatus: paymentStatus || 'Unpaid', machineIds, 
       createdBy: req.user._id 
     }], { session });
 
@@ -118,17 +119,22 @@ const getAllOrders = async (req, res) => {
 };
 
 // ============================================
-// UPDATE ORDER STATUS (Machine Release Logic)
+// UPDATE ORDER STATUS (Staff/Admin)
 // ============================================
 const updateOrderStatus = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { status } = req.body;
-    const updates = { status };
+    // ✅ 1. Accept paymentStatus from the request
+    const { status, paymentStatus } = req.body;
     
-    if (['Completed', 'Claimed', 'Cancelled'].includes(status)) {
+    const updates = {};
+    if (status) updates.status = status;
+    if (paymentStatus) updates.paymentStatus = paymentStatus; // ✅ 2. Add to updates
+    
+    // Track completion time
+    if (status === 'Completed' || status === 'Claimed' || status === 'Cancelled') {
       updates.completedAt = new Date();
     }
 
@@ -138,10 +144,12 @@ const updateOrderStatus = async (req, res) => {
       { new: true, session }
     ).populate('customerId', 'username email');
 
-    if (!updatedOrder) throw new Error("Order not found");
+    if (!updatedOrder) {
+      throw new Error("Order not found");
+    }
 
-    // ✅ Machine Release: If order is finished, free the machines
-    if (['Completed', 'Claimed', 'Cancelled'].includes(status)) {
+    // Machine Release Logic
+    if (status && ['Completed', 'Claimed', 'Cancelled'].includes(status)) {
       if (updatedOrder.machineIds && updatedOrder.machineIds.length > 0) {
         await Machine.updateMany(
           { _id: { $in: updatedOrder.machineIds } },
@@ -160,6 +168,7 @@ const updateOrderStatus = async (req, res) => {
 
     await session.commitTransaction();
     res.status(200).json(updatedOrder);
+
   } catch (error) {
     await session.abortTransaction();
     res.status(500).json({ message: error.message });
@@ -167,15 +176,42 @@ const updateOrderStatus = async (req, res) => {
     session.endSession();
   }
 };
-
+// ============================================
+// GET ORDER STATS (Admin Only)
+// ============================================
 const getOrderStats = async (req, res) => {
   try {
-    const [revenue, status] = await Promise.all([
-      Order.aggregate([{ $group: { _id: null, total: { $sum: "$totalPrice" }, count: { $sum: 1 } } }]),
-      Order.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }])
+    const [revenueStats, statusStats] = await Promise.all([
+      Order.aggregate([
+        {
+          $group: {
+            _id: null,
+            // ✅ LOGIC UPDATE: Only count revenue if paymentStatus is 'Paid'
+            totalRevenue: { 
+              $sum: { 
+                $cond: [{ $eq: ["$paymentStatus", "Paid"] }, "$totalPrice", 0] 
+              } 
+            },
+            // Keep counting ALL orders (paid or unpaid) for volume tracking
+            totalOrders: { $sum: 1 },
+            avgOrderValue: { $avg: "$totalPrice" }
+          }
+        }
+      ]),
+      Order.aggregate([
+        { $group: { _id: "$status", count: { $sum: 1 } } }
+      ])
     ]);
-    res.status(200).json({ revenue: revenue[0]?.total || 0, count: revenue[0]?.count || 0, breakdown: status });
-  } catch (error) { res.status(500).json({ message: error.message }); }
+
+    res.status(200).json({
+      revenue: revenueStats[0]?.totalRevenue || 0,
+      count: revenueStats[0]?.totalOrders || 0,
+      avgValue: revenueStats[0]?.avgOrderValue || 0,
+      breakdown: statusStats
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 const getCustomerOrders = async (req, res) => {

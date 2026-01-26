@@ -56,7 +56,7 @@ export default function Reports({ user, onLogout }) {
 
   // --- 2. DATA PROCESSING ---
   
-  // Service Type Distribution
+  // Service Type Distribution (Counts ALL orders for operational volume)
   const serviceStats = filteredOrders.reduce((acc, order) => {
     const service = order.serviceType || 'Unknown';
     acc[service] = (acc[service] || 0) + 1;
@@ -68,8 +68,11 @@ export default function Reports({ user, onLogout }) {
     value: serviceStats[key]
   }));
 
-  // Revenue by Date
+  // ✅ FIX 1: Revenue by Date (Only count if PAID)
   const revenueByDate = filteredOrders.reduce((acc, order) => {
+    // Skip unpaid orders for the revenue chart
+    if (order.paymentStatus !== 'Paid') return acc;
+
     const date = new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     acc[date] = (acc[date] || 0) + order.totalPrice;
     return acc;
@@ -80,9 +83,15 @@ export default function Reports({ user, onLogout }) {
       revenue: revenueByDate[date]
   }));
 
-  // Top Metrics
-  const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+  // ✅ FIX 2: Top Metrics (Only count revenue if PAID)
+  const totalRevenue = filteredOrders.reduce((sum, order) => {
+    return order.paymentStatus === 'Paid' ? sum + order.totalPrice : sum;
+  }, 0);
+
+  // Total Orders counts EVERYTHING (Work done)
   const totalOrders = filteredOrders.length;
+  
+  // Avg Value based on PAID revenue / Total Orders
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
   if (loading) return <div className="p-10 text-center">Generating Reports...</div>;
@@ -104,15 +113,15 @@ export default function Reports({ user, onLogout }) {
           <div className="relative w-full sm:w-48">
              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
              <select 
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer bg-white text-sm"
-              >
-                <option>Today</option>
-                <option>This Week</option>
-                <option>This Month</option>
-                <option>This Year</option>
-              </select>
+               value={dateRange}
+               onChange={(e) => setDateRange(e.target.value)}
+               className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer bg-white text-sm"
+             >
+               <option>Today</option>
+               <option>This Week</option>
+               <option>This Month</option>
+               <option>This Year</option>
+             </select>
           </div>
 
           {/* Export Button */}
@@ -133,7 +142,7 @@ export default function Reports({ user, onLogout }) {
             <div className="p-2 bg-green-50 text-green-600 rounded-lg">
               <DollarSign className="w-5 h-5" />
             </div>
-            <span className="text-gray-500 text-sm font-medium">Revenue</span>
+            <span className="text-gray-500 text-sm font-medium">Revenue (Paid)</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">₱{totalRevenue.toLocaleString()}</p>
         </div>
@@ -164,7 +173,7 @@ export default function Reports({ user, onLogout }) {
         
         {/* Revenue Chart */}
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Revenue Trend</h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Revenue Trend (Paid Only)</h3>
           <div className="h-64 w-full">
             {revenueChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -193,7 +202,7 @@ export default function Reports({ user, onLogout }) {
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                <span className="text-sm">No revenue data for {dateRange}</span>
+                <span className="text-sm">No paid revenue data for {dateRange}</span>
               </div>
             )}
           </div>
@@ -277,6 +286,10 @@ export default function Reports({ user, onLogout }) {
                     </td>
                     <td className="px-6 py-3 text-sm font-bold text-gray-900 text-right">
                       ₱{order.totalPrice}
+                      {/* ✅ FIX 3: Visual indicator for Unpaid orders */}
+                      {order.paymentStatus !== 'Paid' && (
+                        <div className="text-[10px] text-red-500 font-normal uppercase mt-0.5 bg-red-50 inline-block px-1 rounded">Unpaid</div>
+                      )}
                     </td>
                     <td className="px-6 py-3 text-center">
                       <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
