@@ -69,7 +69,11 @@ export default function Dashboard({ user, onLogout }) {
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     return orders.filter(order => {
-      const orderDate = new Date(order.createdAt);
+      // This moves the order to "Today" if it was PAID today, even if created last week.
+      const orderDate = (order.paymentStatus === 'Paid' && order.paidAt) 
+        ? new Date(order.paidAt) 
+        : new Date(order.createdAt);
+        
       switch (dateRange) {
         case 'Today': return orderDate >= startOfDay;
         case 'This Week':

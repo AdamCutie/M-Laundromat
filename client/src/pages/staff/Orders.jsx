@@ -3,7 +3,8 @@ import StaffLayout from '../../components/StaffLayout';
 import orderService from '../../services/orderService';
 import LoadingScreen from '../../components/LoadingScreen';
 import { 
-  Search, Filter, ArrowRight, RefreshCw, Calendar, X, ChevronDown 
+  Search, Filter, ArrowRight, RefreshCw, Calendar, ChevronDown, 
+  DollarSign, CheckCircle, AlertCircle 
 } from 'lucide-react';
 
 export default function StaffOrders({ user, onLogout }) {
@@ -13,9 +14,9 @@ export default function StaffOrders({ user, onLogout }) {
   // FILTERS STATE
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [dateFilter, setDateFilter] = useState('Today'); // ✅ Default: Today
+  const [dateFilter, setDateFilter] = useState('Today'); 
   
-  // ✅ MOBILE STATE
+  // MOBILE STATE
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function StaffOrders({ user, onLogout }) {
     }
   };
 
-  // WORKFLOW LOGIC
+  // --- WORKFLOW LOGIC (Next Step) ---
   const handleNextStatus = async (order) => {
     const workflow = ['Pending', 'In Progress', 'Ready', 'Completed', 'Claimed'];
     const currentIndex = workflow.indexOf(order.status);
@@ -43,15 +44,32 @@ export default function StaffOrders({ user, onLogout }) {
       if (!window.confirm(`Move Order #${order._id.slice(-4)} to "${nextStatus}"?`)) return;
       
       try {
-        await orderService.updateStatus(order._id, nextStatus);
-        fetchOrders(); // Refresh list
+        await orderService.updateOrderStatus(order._id, { status: nextStatus });
+        fetchOrders(); // Refresh list to update timestamps/machines
       } catch (err) {
         alert("Failed to update status");
       }
     }
   };
 
-  // FILTERING LOGIC
+  // --- PAYMENT LOGIC (Collect Money) ---
+  const handleMarkPaid = async (orderId) => {
+    if (!window.confirm("Confirm payment received for this order?")) return;
+
+    try {
+      // Updates paymentStatus to 'Paid'
+      await orderService.updateOrderStatus(orderId, { paymentStatus: 'Paid' });
+      
+      // Optimistic Update (Update UI immediately without refresh)
+      setOrders(prev => prev.map(o => 
+        o._id === orderId ? { ...o, paymentStatus: 'Paid' } : o
+      ));
+    } catch (err) {
+      alert("Failed to update payment: " + err.message);
+    }
+  };
+
+  // --- FILTERING LOGIC ---
   const filteredOrders = orders.filter(order => {
     // 1. Search Filter
     const matchesSearch = 
@@ -107,7 +125,7 @@ export default function StaffOrders({ user, onLogout }) {
           {/* Search & Actions Bar */}
           <div className="flex gap-2 w-full sm:w-auto">
             
-            {/* Search Input - Expands on Mobile */}
+            {/* Search Input */}
             <div className="relative flex-1 sm:w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -119,7 +137,7 @@ export default function StaffOrders({ user, onLogout }) {
               />
             </div>
 
-            {/* Mobile Filter Toggle Button */}
+            {/* Mobile Filter Toggle */}
             <button 
               onClick={() => setShowFilters(!showFilters)}
               className={`sm:hidden p-2 rounded-lg border transition-colors ${
@@ -140,8 +158,7 @@ export default function StaffOrders({ user, onLogout }) {
           </div>
         </div>
 
-        {/* --- COLLAPSIBLE FILTERS ROW (Dropdowns) --- */}
-        {/* On Mobile: Hidden unless toggled. On Desktop: Always visible (flex) */}
+        {/* --- COLLAPSIBLE FILTERS ROW --- */}
         <div className={`${showFilters ? 'flex' : 'hidden'} sm:flex flex-col sm:flex-row gap-2 sm:justify-end transition-all`}>
           
           {/* Date Filter */}
@@ -231,19 +248,48 @@ export default function StaffOrders({ user, onLogout }) {
               </div>
 
               {/* Footer Actions */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-                <p className="text-lg font-bold text-emerald-600">₱{order.totalPrice.toFixed(2)}</p>
-                
-                {/* Workflow Button */}
-                {order.status !== 'Claimed' && order.status !== 'Cancelled' && (
-                  <button 
-                    onClick={() => handleNextStatus(order)}
-                    className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white text-xs font-bold uppercase tracking-wide rounded-lg hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200"
-                  >
-                    Next Step <ArrowRight className="w-3 h-3" />
-                  </button>
-                )}
+              <div className="pt-4 border-t border-gray-100 mt-auto">
+                {/* Price & Payment Status Row */}
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-lg font-bold text-emerald-600">₱{order.totalPrice.toFixed(2)}</p>
+                  
+                  {/* Payment Badge */}
+                  {order.paymentStatus === 'Paid' ? (
+                    <span className="flex items-center gap-1 text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                      <CheckCircle className="w-3 h-3" /> Paid
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                      <AlertCircle className="w-3 h-3" /> Unpaid
+                    </span>
+                  )}
+                </div>
+
+                {/* Buttons Row */}
+                <div className="flex gap-2">
+                  
+                  {/* Collect Payment Button (Conditional) */}
+                  {order.paymentStatus !== 'Paid' && (
+                    <button 
+                      onClick={() => handleMarkPaid(order._id)}
+                      className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-emerald-600 text-white text-xs font-bold uppercase rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                    >
+                      <DollarSign className="w-3 h-3" /> Collect
+                    </button>
+                  )}
+
+                  {/* Workflow Button */}
+                  {order.status !== 'Claimed' && order.status !== 'Cancelled' && (
+                    <button 
+                      onClick={() => handleNextStatus(order)}
+                      className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-600 text-white text-xs font-bold uppercase rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                    >
+                      Next Step <ArrowRight className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
+
             </div>
           ))
         ) : (
@@ -264,4 +310,4 @@ export default function StaffOrders({ user, onLogout }) {
       </div>
     </StaffLayout>
   );
-}
+} 

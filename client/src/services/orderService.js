@@ -26,6 +26,12 @@ const orderService = {
     return response.data;
   },
 
+  // Accepts updates like { status: 'Completed' } OR { paymentStatus: 'Paid' }
+  updateOrderStatus: async (id, updates) => {
+    const response = await api.put(`/orders/${id}`, updates);
+    return response.data;
+  },
+
   // ✅ FIX: Get customer's own orders (Customer only)
   getCustomerOrders: async () => {
     const response = await api.get('/customers/my-orders');

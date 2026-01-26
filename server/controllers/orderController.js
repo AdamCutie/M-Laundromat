@@ -62,10 +62,11 @@ const createOrder = async (req, res) => {
 
     // 5. Create Order
     const initialStatus = machineIds.length > 0 ? 'In Progress' : 'Pending';
+    const isPaidNow = paymentStatus === 'Paid';
     const [newOrder] = await Order.create([{
       customerName, customerId, phoneNumber: customerPhone || '',
       serviceType, weight, washCount, dryCount, totalPrice,
-      addOns, status: initialStatus, paymentStatus: paymentStatus || 'Unpaid', machineIds, 
+      addOns, status: initialStatus, paymentStatus: paymentStatus || 'Unpaid', paidAt: isPaidNow ? new Date() : null, machineIds, 
       createdBy: req.user._id 
     }], { session });
 
@@ -126,12 +127,16 @@ const updateOrderStatus = async (req, res) => {
   session.startTransaction();
 
   try {
-    // ✅ 1. Accept paymentStatus from the request
     const { status, paymentStatus } = req.body;
     
     const updates = {};
     if (status) updates.status = status;
-    if (paymentStatus) updates.paymentStatus = paymentStatus; // ✅ 2. Add to updates
+    if (paymentStatus) {
+      updates.paymentStatus = paymentStatus; 
+      if (paymentStatus === 'Paid') {
+         updates.paidAt = new Date(); 
+      }
+    }
     
     // Track completion time
     if (status === 'Completed' || status === 'Claimed' || status === 'Cancelled') {

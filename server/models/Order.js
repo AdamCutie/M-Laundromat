@@ -81,6 +81,11 @@ const OrderSchema = new mongoose.Schema({
     default: 'Unpaid' 
   },
 
+  // ✅ NEW FIELD: The exact time money was collected
+  paidAt: { 
+    type: Date
+  },
+
   // ============================================
   // ORDER STATUS TRACKING
   // ============================================
