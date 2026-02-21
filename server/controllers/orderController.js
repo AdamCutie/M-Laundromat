@@ -4,6 +4,18 @@ const Inventory = require('../models/Inventory');
 const User = require('../models/User');
 const Machine = require('../models/Machine'); 
 
+// Normalize phone numbers to digits only (max 11)
+const normalizePhone = (value) => {
+  if (!value) return '';
+  return String(value).replace(/\D/g, '').slice(0, 11);
+};
+
+// Strict validation: only 11-digit numbers allowed when provided
+const isValidPhone = (value) => {
+  if (!value) return true;
+  return /^\d{11}$/.test(String(value));
+};
+
 // ============================================
 // CREATE ORDER
 // ============================================
@@ -29,11 +41,15 @@ const createOrder = async (req, res) => {
     if (!customerName || !serviceType || totalPrice === undefined) {
       throw new Error("Please fill in all required fields");
     }
+    if (!isValidPhone(customerPhone)) {
+      throw new Error("Phone number must be 11 digits (numbers only).");
+    }
 
     // 2. Link Customer
+    const normalizedPhone = normalizePhone(customerPhone);
     let customerId = null;
-    if (customerPhone) {
-      const existingCustomer = await User.findOne({ phoneNumber: customerPhone, role: 'customer' }).session(session);
+    if (normalizedPhone) {
+      const existingCustomer = await User.findOne({ phoneNumber: normalizedPhone, role: 'customer' }).session(session);
       if (existingCustomer) customerId = existingCustomer._id;
     }
 
@@ -64,7 +80,7 @@ const createOrder = async (req, res) => {
     const initialStatus = machineIds.length > 0 ? 'In Progress' : 'Pending';
     const isPaidNow = paymentStatus === 'Paid';
     const [newOrder] = await Order.create([{
-      customerName, customerId, phoneNumber: customerPhone || '',
+      customerName, customerId, phoneNumber: normalizedPhone || '',
       serviceType, weight, washCount, dryCount, totalPrice,
       addOns, status: initialStatus, paymentStatus: paymentStatus || 'Unpaid', paidAt: isPaidNow ? new Date() : null, machineIds, 
       createdBy: req.user._id 

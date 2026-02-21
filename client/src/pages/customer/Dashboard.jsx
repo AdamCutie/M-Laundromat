@@ -131,7 +131,7 @@ export default function CustomerDashboard({ user, onLogout }) {
 
                 {/* Price & Status (Desktop Layout / Mobile Price) */}
                 <div className="flex justify-between items-center md:block md:text-right">
-                  <p className="text-base font-bold text-indigo-600 md:text-gray-900 md:mb-1">₱{order.totalPrice.toFixed(2)}</p>
+                  <p className="text-base font-bold text-indigo-600 md:text-gray-900 md:mb-1">₱{(Number(order.totalPrice) || 0).toFixed(2)}</p>
                   <div className="hidden md:block">
                     <StatusBadge status={order.status} />
                   </div>

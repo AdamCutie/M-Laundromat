@@ -310,11 +310,11 @@ export default function Inventory({ user, onLogout }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Price (₱)</label>
-                  <input required type="number" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.unitPrice} onChange={e => setNewItem({...newItem, unitPrice: parseFloat(e.target.value)})} />
+                  <input required type="number" min="0" step="0.01" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.unitPrice} onChange={e => setNewItem({...newItem, unitPrice: Number(e.target.value) || 0})} />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Initial Stock</label>
-                  <input required type="number" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.stockLevel} onChange={e => setNewItem({...newItem, stockLevel: parseInt(e.target.value)})} />
+                  <input required type="number" min="0" step="1" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newItem.stockLevel} onChange={e => setNewItem({...newItem, stockLevel: Number(e.target.value) || 0})} />
                 </div>
               </div>
               <button type="submit" className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium shadow-md">
@@ -343,11 +343,11 @@ export default function Inventory({ user, onLogout }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Price (₱)</label>
-                  <input required type="number" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.unitPrice} onChange={e => setEditingItem({...editingItem, unitPrice: parseFloat(e.target.value)})} />
+                  <input required type="number" min="0" step="0.01" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.unitPrice} onChange={e => setEditingItem({...editingItem, unitPrice: Number(e.target.value) || 0})} />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Current Stock</label>
-                  <input required type="number" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.stockLevel} onChange={e => setEditingItem({...editingItem, stockLevel: parseInt(e.target.value)})} />
+                  <input required type="number" min="0" step="1" className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={editingItem.stockLevel} onChange={e => setEditingItem({...editingItem, stockLevel: Number(e.target.value) || 0})} />
                 </div>
               </div>
               <button type="submit" className="w-full mt-2 flex justify-center items-center gap-2 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium shadow-md">

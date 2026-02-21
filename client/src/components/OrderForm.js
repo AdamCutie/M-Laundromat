@@ -24,6 +24,7 @@ const OrderForm = () => {
   const [cart, setCart] = useState([]); 
   const [selectedItem, setSelectedItem] = useState('');
   const [itemQuantity, setItemQuantity] = useState(1);
+  const sanitizePhone = (value) => value.replace(/\D/g, '').slice(0, 11);
 
   // --- INITIAL DATA LOADING ---
   useEffect(() => {
@@ -72,19 +73,29 @@ const OrderForm = () => {
 
   // 5. HANDLER: Handle Typing
   const handleChange = (e) => {
-    const value = e.target.type === 'number' ? parseFloat(e.target.value) : e.target.value;
-    setFormData({ ...formData, [e.target.name]: value });
+    const { name, type, value } = e.target;
+    if (name === 'customerPhone') {
+      setFormData({ ...formData, [name]: sanitizePhone(value) });
+      return;
+    }
+    if (type === 'number') {
+      const num = Number(value);
+      setFormData({ ...formData, [name]: Number.isFinite(num) ? num : 0 });
+      return;
+    }
+    setFormData({ ...formData, [name]: value });
   };
 
   const addToCart = () => {
     const product = inventoryItems.find(i => i._id === selectedItem);
     if (!product) return;
 
+    const safeQty = Math.max(1, parseInt(itemQuantity, 10) || 1);
     const newItem = {
       itemId: product._id,
       itemName: product.itemName,
       price: product.unitPrice,
-      quantity: parseInt(itemQuantity)
+      quantity: safeQty
     };
 
     setCart([...cart, newItem]);
@@ -157,17 +168,17 @@ const OrderForm = () => {
         {formData.serviceType === 'Full-Service' ? (
           <div style={{ marginBottom: '10px' }}>
             <label>Weight (kg):</label><br/>
-            <input type="number" name="weight" value={formData.weight} onChange={handleChange} style={{ width: '100%', padding: '8px' }}/>
+            <input type="number" name="weight" min="0" step="0.1" value={formData.weight} onChange={handleChange} style={{ width: '100%', padding: '8px' }}/>
           </div>
         ) : (
           <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
             <div style={{ flex: 1 }}>
               <label>Wash:</label>
-              <input type="number" name="washCount" value={formData.washCount} onChange={handleChange} style={{ width: '100%' }}/>
+              <input type="number" name="washCount" min="0" step="1" value={formData.washCount} onChange={handleChange} style={{ width: '100%' }}/>
             </div>
             <div style={{ flex: 1 }}>
               <label>Dry:</label>
-              <input type="number" name="dryCount" value={formData.dryCount} onChange={handleChange} style={{ width: '100%' }}/>
+              <input type="number" name="dryCount" min="0" step="1" value={formData.dryCount} onChange={handleChange} style={{ width: '100%' }}/>
             </div>
           </div>
         )}
@@ -189,10 +200,10 @@ const OrderForm = () => {
               ))}
             </select>
             
-            <input 
+              <input 
               type="number" 
               value={itemQuantity} 
-              onChange={(e) => setItemQuantity(e.target.value)} 
+              onChange={(e) => setItemQuantity(e.target.value.replace(/[^\d]/g, '').slice(0, 3))} 
               min="1"
               style={{ width: '50px', padding: '5px' }}
             />

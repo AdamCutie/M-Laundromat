@@ -19,6 +19,7 @@ export default function Users({ user, onLogout }) {
     role: 'staff',
     phoneNumber: '' 
   });
+  const sanitizePhone = (value) => value.replace(/\D/g, '').slice(0, 11);
 
   useEffect(() => {
     fetchUsers();
@@ -315,7 +316,7 @@ export default function Users({ user, onLogout }) {
                   type="tel" 
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   value={newUser.phoneNumber}
-                  onChange={e => setNewUser({...newUser, phoneNumber: e.target.value})}
+                  onChange={e => setNewUser({...newUser, phoneNumber: sanitizePhone(e.target.value)})}
                   placeholder="0912 345 6789"
                 />
               </div>

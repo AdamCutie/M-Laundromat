@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 export default function CustomerProfile({ onLogout }) {
-  const { user, login } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   
@@ -48,7 +48,6 @@ export default function CustomerProfile({ onLogout }) {
       });
 
       if (response.data) {
-        login(response.data.username, null);
         localStorage.setItem('user', JSON.stringify(response.data));
         window.location.reload(); 
       }

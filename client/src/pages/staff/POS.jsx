@@ -15,6 +15,7 @@ export default function POS({ user, onLogout }) {
   const [cart, setCart] = useState([]);
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const sanitizePhone = (value) => value.replace(/\D/g, '').slice(0, 11);
   
   // Data from Backend
   const [services, setServices] = useState([]);
@@ -345,7 +346,7 @@ export default function POS({ user, onLogout }) {
               type="tel"
               placeholder="Phone (Optional)"
               value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
+              onChange={(e) => setCustomerPhone(sanitizePhone(e.target.value))}
               className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
             />
           </div>

@@ -64,7 +64,7 @@ export default function Login({ isModal = false, onSwitchToRegister }) {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <div className="relative">
               <input 
-                type="text"
+                type="email"
                 className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
                 placeholder="Enter your email"
                 value={email}

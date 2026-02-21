@@ -92,7 +92,7 @@ export default function CustomerOrders({ user, onLogout }) {
                       {order.addOns.length > 0 && <span className="text-xs text-gray-400 ml-1">(+Addons)</span>}
                     </td>
                     <td className="px-6 py-4 text-sm font-bold text-gray-900">
-                      ₱{order.totalPrice.toFixed(2)}
+                      ₱{(Number(order.totalPrice) || 0).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <StatusBadge status={order.status} />
@@ -147,7 +147,7 @@ export default function CustomerOrders({ user, onLogout }) {
                     </div>
                     <div className="text-right">
                        <p className="text-xs text-gray-400 mb-0.5">Total</p>
-                       <p className="text-lg font-bold text-indigo-600">₱{order.totalPrice.toFixed(2)}</p>
+                       <p className="text-lg font-bold text-indigo-600">₱{(Number(order.totalPrice) || 0).toFixed(2)}</p>
                     </div>
                  </div>
                </div>

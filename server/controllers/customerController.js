@@ -4,6 +4,18 @@ const Machine = require('../models/Machine');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Normalize phone numbers to digits only (max 11)
+const normalizePhone = (value) => {
+  if (!value) return '';
+  return String(value).replace(/\D/g, '').slice(0, 11);
+};
+
+// Strict validation: only 11-digit numbers allowed when provided
+const isValidPhone = (value) => {
+  if (!value) return true;
+  return /^\d{11}$/.test(String(value));
+};
+
 // ============================================
 // HELPER: Generate JWT Token
 // ============================================
@@ -19,6 +31,10 @@ const generateToken = (id, role) => {
 const registerCustomer = async (req, res) => {
   try {
     const { username, email, password, phoneNumber, address } = req.body;
+    if (!isValidPhone(phoneNumber)) {
+      return res.status(400).json({ message: 'Phone number must be 11 digits (numbers only).' });
+    }
+    const normalizedPhone = normalizePhone(phoneNumber);
 
     // 1. Validation
     if (!username || !password) {
@@ -43,12 +59,20 @@ const registerCustomer = async (req, res) => {
       username,
       email: email || undefined,
       password: hashedPassword,
-      phoneNumber: phoneNumber || '',
+      phoneNumber: normalizedPhone || '',
       address: address || '',
       role: 'customer' // Force role to customer
     });
 
-    // 5. Generate token
+    // 5. Link any guest orders by phoneNumber to this new account
+    if (customer.phoneNumber) {
+      await Order.updateMany(
+        { phoneNumber: customer.phoneNumber, customerId: null },
+        { $set: { customerId: customer._id } }
+      );
+    }
+
+    // 6. Generate token
     const token = generateToken(customer._id, customer.role);
 
     res.status(201).json({
@@ -148,16 +172,21 @@ const updateProfile = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Track if phone number is changing
-    const oldPhone = user.phoneNumber;
-    const newPhone = req.body.phoneNumber;
+    // Track if phone number is changing (normalized)
+    const oldPhoneRaw = user.phoneNumber || '';
+    const newPhoneRaw = req.body.phoneNumber || '';
+    if (!isValidPhone(newPhoneRaw)) {
+      return res.status(400).json({ message: 'Phone number must be 11 digits (numbers only).' });
+    }
+    const oldPhone = normalizePhone(oldPhoneRaw);
+    const newPhone = normalizePhone(newPhoneRaw);
     // Check if newPhone is provided and is actually different
     const isPhoneUpdated = newPhone && (newPhone !== oldPhone);
 
     // Update fields
     user.username = req.body.username || user.username;
     user.email = req.body.email || user.email;
-    user.phoneNumber = newPhone || user.phoneNumber;
+    user.phoneNumber = newPhone || oldPhone;
     user.address = req.body.address || user.address;
 
     // Handle password update if provided
@@ -169,11 +198,21 @@ const updateProfile = async (req, res) => {
     const updatedUser = await user.save();
 
     // ✅ CRITICAL FIX: Retroactively link past orders
-    // If the user updated their phone number, find all "Guest" orders 
-    // with that number and assign them to this account.
+    // If the user updated their phone number, link guest orders
+    // from BOTH the old and new numbers to this account.
     if (isPhoneUpdated) {
+      const matchPhones = [
+        oldPhoneRaw,
+        newPhoneRaw,
+        oldPhone,
+        newPhone
+      ].map(p => (p || '').toString().trim()).filter(Boolean);
+
       await Order.updateMany(
-        { phoneNumber: updatedUser.phoneNumber, customerId: null },
+        { 
+          customerId: null,
+          phoneNumber: { $in: Array.from(new Set(matchPhones)) }
+        },
         { $set: { customerId: updatedUser._id } }
       );
     }

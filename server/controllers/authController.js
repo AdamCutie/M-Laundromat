@@ -2,6 +2,18 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Normalize phone numbers to digits only (max 11)
+const normalizePhone = (value) => {
+  if (!value) return '';
+  return String(value).replace(/\D/g, '').slice(0, 11);
+};
+
+// Strict validation: only 11-digit numbers allowed when provided
+const isValidPhone = (value) => {
+  if (!value) return true;
+  return /^\d{11}$/.test(String(value));
+};
+
 // Generate JWT Token
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -12,9 +24,13 @@ const generateToken = (id, role) => {
 const registerUser = async (req, res) => {
   try {
     const { name, username, email, password, role, phoneNumber } = req.body;
+    if (!isValidPhone(phoneNumber)) {
+      return res.status(400).json({ message: 'Phone number must be 11 digits (numbers only).' });
+    }
     
     // Normalize username (frontend might send 'name' or 'username')
     const finalUsername = username || name;
+    const normalizedPhone = normalizePhone(phoneNumber);
 
     // 1. Validation
     if (!finalUsername || !email || !password) {
@@ -37,7 +53,7 @@ const registerUser = async (req, res) => {
       email: email, 
       password: hashedPassword,
       role: role || 'staff', // Default to staff if not provided
-      phoneNumber: phoneNumber || '' // ✅ Added this line to actually save the phone number
+      phoneNumber: normalizedPhone || '' // ✅ Added this line to actually save the phone number
     });
 
     if (user) {
