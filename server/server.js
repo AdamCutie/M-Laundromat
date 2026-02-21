@@ -45,10 +45,10 @@ app.use('/api/inventory', inventoryRoutes); // View: Staff, Edit: Admin
 app.use('/api/machines', machineRoutes); // Staff/Admin
 
 // ============================================
-// TEST ROUTE
+// API HEALTH ROUTE
 // ============================================
-app.get('/', (req, res) => {
-  res.json({ 
+app.get('/api/health', (req, res) => {
+  res.json({
     message: 'M-Laundromat API',
     version: '2.0',
     roles: ['admin', 'staff', 'customer']
