@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
 // Create a configured instance of axios
 const api = axios.create({
   // We don't need the full URL here because we added "proxy" in package.json
