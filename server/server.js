@@ -55,16 +55,25 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ✅ 2. SERVE REACT FRONTEND (Add this block)
-// Check if we are in production (or if the client/dist folder exists)
+// ✅ 2. SERVE REACT FRONTEND (Modified for Hybrid Hosting)
 const clientBuildPath = path.join(__dirname, '../client/dist');
-app.use(express.static(clientBuildPath));
+const fs = require('fs');
 
-// The "Catch-All" Route: For any request that isn't an API route, 
-// send back the React index.html file.
-app.get(/(.*)/, (req, res) => {
-  res.sendFile(path.join(clientBuildPath, 'index.html'));
-});
+// Only try to serve static files if the folder actually exists
+if (fs.existsSync(clientBuildPath)) {
+  app.use(express.static(clientBuildPath));
+  app.get(/(.*)/, (req, res) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+  console.log("📁 Serving static frontend files from /client/dist");
+} else {
+  console.log("🌐 Running in API-only mode (No local frontend found)");
+  
+  // Basic landing page for the API root
+  app.get('/', (req, res) => {
+    res.json({ message: "M-Laundromat API is running. Use /api for requests." });
+  });
+}
 
 // ============================================
 // ERROR HANDLER (Optional but recommended)
