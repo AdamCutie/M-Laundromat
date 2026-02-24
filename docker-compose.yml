@@ -1,13 +1,23 @@
 services:
+  # Nginx Proxy Manager - Handles HTTPS for you
+  nginx-proxy:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'   # Public HTTP
+      - '443:443' # Public HTTPS
+      - '81:81'   # Admin UI
+    volumes:
+      - ./nginx/data:/data
+      - ./nginx/letsencrypt:/etc/letsencrypt
+
   # The MongoDB database container
   db:
     image: mongo:latest
     container_name: laundromat_db
     restart: always
-    ports:
-      - "27017:27017" # Exposes MongoDB to the VPS (useful for local backups)
     volumes:
-      - mongo_data:/data/db # Persists your data even if the container restarts
+      - mongo_data:/data/db
 
   # Your Express backend container
   api:
@@ -16,13 +26,11 @@ services:
       dockerfile: Dockerfile
     container_name: laundromat_api
     restart: always
-    ports:
-      - "5000:5000"
     environment:
       - NODE_ENV=production
-      - MONGO_URI=mongodb://db:27017/laundromat # Connects using the service name 'db'
+      - MONGO_URI=mongodb://db:27017/laundromat
       - PORT=5000
-      - JWT_SECRET=your_super_secret_key_here # Update this!
+      - JWT_SECRET=your_super_secret_key_here
     depends_on:
       - db
 
