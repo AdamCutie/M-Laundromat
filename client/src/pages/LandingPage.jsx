@@ -4,12 +4,19 @@ import Logo from '../components/Logo'; // ✅ Using shared Logo component
 import Login from '../components/Login'; 
 import Register from '../components/Register';
 import ChatWidget from '../components/ChatWidget';
+import VideoBackground from '../components/common/VideoBackground';
+
+// Import the video as a React asset
+import heroVideo from '../assets/Laundromat_Video_Montage_Prompts.mp4';
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Dual Modal State: 'login', 'register', or null
   const [activeModal, setActiveModal] = useState(null); 
+
+  // --- VIDEO CONFIGURATION ---
+  const HERO_VIDEO_URL = heroVideo;
 
   const openLogin = () => {
     setActiveModal('login');
@@ -141,20 +148,27 @@ export default function LandingPage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <section className="pt-32 pb-16 md:pt-40 md:pb-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-indigo-50 via-white to-blue-50 overflow-hidden">
-        <div className="max-w-7xl mx-auto text-center relative z-10">
+      <section className="relative pt-32 pb-16 md:pt-40 md:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-[85vh] flex items-center justify-center">
+        
+        {/* Reusable Video Component */}
+        <VideoBackground 
+          videoSrc={HERO_VIDEO_URL} 
+          brightness={0.7} 
+        />
+
+        <div className="max-w-7xl mx-auto text-center relative z-10 px-4">
           
-          <div className="inline-flex items-center gap-2 bg-white border border-indigo-100 rounded-full px-4 py-1.5 mb-8 shadow-sm animate-fade-in-down">
-            <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            <span className="text-xs font-bold text-indigo-900 tracking-wide uppercase">New: Smart Tracking v2.0</span>
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-xl border border-white/30 rounded-full px-4 py-1.5 mb-8 shadow-2xl animate-fade-in-down">
+            <span className="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse"></span>
+            <span className="text-xs font-bold text-white tracking-wide uppercase drop-shadow-md">New: Smart Tracking v2.0</span>
           </div>
           
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-gray-900 mb-6 tracking-tight leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight leading-tight drop-shadow-2xl">
             Laundry Day, <br className="md:hidden" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">Modernized.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-indigo-200">Modernized.</span>
           </h1>
           
-          <p className="text-lg md:text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed px-4">
+          <p className="text-lg md:text-xl text-white/95 mb-10 max-w-2xl mx-auto leading-relaxed px-4 font-medium drop-shadow-lg">
             Experience the future of laundry with real-time tracking, seamless payments, and smart notifications. No more waiting in line.
           </p>
           
@@ -162,7 +176,7 @@ export default function LandingPage() {
             {/* Create Account Button */}
             <button 
               onClick={openRegister}
-              className="w-full sm:w-auto px-8 py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 flex items-center justify-center gap-2 active:scale-95"
+              className="w-full sm:w-auto px-8 py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-500/30 flex items-center justify-center gap-2 active:scale-95"
             >
               Create Account <ArrowRight className="w-5 h-5" />
             </button>
@@ -170,29 +184,29 @@ export default function LandingPage() {
             {/* Login Button */}
             <button 
               onClick={openLogin}
-              className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold text-lg hover:bg-gray-50 transition-all active:scale-95"
+              className="w-full sm:w-auto px-8 py-4 bg-white/10 backdrop-blur-md text-white border border-white/30 rounded-xl font-bold text-lg hover:bg-white/20 transition-all active:scale-95 shadow-xl"
             >
               Log In
             </button>
           </div>
 
-          {/* Stats */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-gray-200 pt-8 opacity-80 max-w-4xl mx-auto">
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-indigo-600">500+</p>
-              <p className="text-sm text-gray-500">Happy Customers</p>
+          {/* Stats with Glassmorphism */}
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-white/20 pt-8 max-w-4xl mx-auto">
+            <div className="backdrop-blur-sm bg-white/5 p-4 rounded-2xl border border-white/10">
+              <p className="text-2xl md:text-3xl font-bold text-blue-300">500+</p>
+              <p className="text-sm text-white/80 font-medium">Happy Customers</p>
             </div>
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-indigo-600">12k</p>
-              <p className="text-sm text-gray-500">Loads Washed</p>
+            <div className="backdrop-blur-sm bg-white/5 p-4 rounded-2xl border border-white/10">
+              <p className="text-2xl md:text-3xl font-bold text-blue-300">12k</p>
+              <p className="text-sm text-white/80 font-medium">Loads Washed</p>
             </div>
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-indigo-600">24/7</p>
-              <p className="text-sm text-gray-500">Smart Lockers</p>
+            <div className="backdrop-blur-sm bg-white/5 p-4 rounded-2xl border border-white/10">
+              <p className="text-2xl md:text-3xl font-bold text-blue-300">24/7</p>
+              <p className="text-sm text-white/80 font-medium">Smart Lockers</p>
             </div>
-            <div>
-              <p className="text-2xl md:text-3xl font-bold text-indigo-600">4.9</p>
-              <p className="text-sm text-gray-500">Average Rating</p>
+            <div className="backdrop-blur-sm bg-white/5 p-4 rounded-2xl border border-white/10">
+              <p className="text-2xl md:text-3xl font-bold text-blue-300">4.9</p>
+              <p className="text-sm text-white/80 font-medium">Average Rating</p>
             </div>
           </div>
         </div>
