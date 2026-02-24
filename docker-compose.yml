@@ -1,14 +1,13 @@
 services:
-       # Your Express backend container
-       api:
-         build:
-           context: ./server
-           dockerfile: Dockerfile
-         container_name: laundromat_api
-         restart: always
-         ports:
-          - "5000:5000"
-         env_file:
-          - .env  # This loads your MONGO_URI (Atlas) and Gemini keys
-         environment:
-          - NODE_ENV=production
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: laundromat_v2
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
