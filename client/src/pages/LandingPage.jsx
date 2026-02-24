@@ -6,9 +6,6 @@ import Register from '../components/Register';
 import ChatWidget from '../components/ChatWidget';
 import VideoBackground from '../components/common/VideoBackground';
 
-// Import the video as a React asset
-import heroVideo from '../assets/Laundromat_Video_Montage_Prompts.mp4';
-
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
@@ -16,7 +13,9 @@ export default function LandingPage() {
   const [activeModal, setActiveModal] = useState(null); 
 
   // --- VIDEO CONFIGURATION ---
-  const HERO_VIDEO_URL = heroVideo;
+  // Using the 'public' folder method to save VPS RAM.
+  // Make sure your video is saved at: client/public/hero-video.mp4
+  const HERO_VIDEO_URL = "/hero-video.mp4"; 
 
   const openLogin = () => {
     setActiveModal('login');
