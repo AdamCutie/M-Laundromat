@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import inventoryService from '../../services/inventoryService';
+import LoadingScreen from '../../components/LoadingScreen';
 import { Plus, Package, AlertTriangle, Search, Save, X, Trash2, Pencil } from 'lucide-react';
 
 export default function Inventory({ user, onLogout }) {
@@ -104,7 +105,7 @@ export default function Inventory({ user, onLogout }) {
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Loading Inventory...</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <AdminLayout user={user} onLogout={onLogout}>

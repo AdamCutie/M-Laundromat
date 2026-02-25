@@ -26,6 +26,8 @@ const CustomerDashboard = lazy(() => import('./pages/customer/Dashboard.jsx'));
 const CustomerOrders = lazy(() => import('./pages/customer/Orders.jsx'));
 const CustomerProfile = lazy(() => import('./pages/customer/Profile.jsx'));
 
+import LoadingScreen from './components/LoadingScreen.jsx';
+
 // --- CONSTANTS ---
 const ROLES = {
   ADMIN: 'admin',
@@ -35,17 +37,11 @@ const ROLES = {
 
 // --- COMPONENTS ---
 
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-  </div>
-);
-
 // Protected Route Wrapper
 const ProtectedRoute = ({ allowedRole }) => {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingScreen />;
 
   // Redirect unauthenticated users to Landing Page
   if (!user) return <Navigate to="/" replace />;
@@ -65,7 +61,7 @@ const ProtectedRoute = ({ allowedRole }) => {
 // Root Dispatcher
 const RootDispatcher = () => {
   const { user, loading } = useContext(AuthContext);
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingScreen />;
   
   // If guest, show Landing Page (which contains Login/Register modals)
   if (!user) return <LandingPage />;
@@ -84,7 +80,7 @@ function AppRoutes() {
   const pageProps = { user, onLogout: logout };
 
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={<LoadingScreen />}>
       <Routes>
         {/* === PUBLIC ROUTES === */}
         {/* ✅ CLEANED UP: Only Root is needed now */}

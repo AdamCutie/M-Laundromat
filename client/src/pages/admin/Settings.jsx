@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import settingService from '../../services/settingService';
+import LoadingScreen from '../../components/LoadingScreen';
 import { Save, Lock, Bell, Store, CreditCard, Megaphone } from 'lucide-react';
 
 export default function Settings({ user, onLogout }) {
@@ -77,7 +78,7 @@ export default function Settings({ user, onLogout }) {
     { id: 'security', label: 'Security', icon: Lock },
   ];
 
-  if (loading) return <div className="p-10 text-center">Loading Settings...</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <AdminLayout user={user} onLogout={onLogout}>

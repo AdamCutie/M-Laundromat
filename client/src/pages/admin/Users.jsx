@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import userService from '../../services/userService';
+import LoadingScreen from '../../components/LoadingScreen';
 import { Search, Plus, Mail, Phone, Shield, UserCog, Trash2, X, Save, User as UserIcon } from 'lucide-react';
 
 export default function Users({ user, onLogout }) {
@@ -81,7 +82,7 @@ export default function Users({ user, onLogout }) {
   const customerCount = users.filter(u => u.role === 'customer').length;
   const staffCount = users.filter(u => u.role === 'staff' || u.role === 'admin').length;
 
-  if (loading) return <div className="p-10 text-center">Loading Users...</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <AdminLayout user={user} onLogout={onLogout}>

@@ -2,9 +2,9 @@ import axios from 'axios';
 
 // Create a configured instance of axios
 const api = axios.create({
-  // We don't need the full URL here because we added "proxy" in package.json
-  // React will automatically forward this to localhost:5000
-  baseURL: import.meta.env.VITE_API_URL || '/api', 
+  // In a Monolith (Railway Only), we use relative paths.
+  // This automatically talks to the same domain the frontend is hosted on.
+  baseURL: '/api', 
   headers: {
     'Content-Type': 'application/json'
   }

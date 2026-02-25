@@ -4,10 +4,7 @@ import AdminLayout from '../../components/AdminLayout';
 import orderService from '../../services/orderService';
 import machineService from '../../services/machineService';
 import { DollarSign, ShoppingCart, Boxes, Users, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
-import { 
-  LineChart, Line, PieChart, Pie, Cell, 
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
-} from 'recharts';
+import LoadingScreen from '../../components/LoadingScreen';
 
 // ✅ METRIC CARD (Mobile Optimized)
 function MetricCard({ title, value, subtext, isPositive, icon: Icon, iconBg, iconColor, onClick }) {
@@ -129,7 +126,7 @@ export default function Dashboard({ user, onLogout }) {
     revenue: revenueByDate[label]
   }));
 
-  if (loading) return <div className="p-10 text-center text-gray-500">Loading Dashboard...</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <AdminLayout user={user} onLogout={onLogout}>

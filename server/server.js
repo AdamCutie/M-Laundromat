@@ -55,25 +55,20 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ✅ 2. SERVE REACT FRONTEND (Modified for Hybrid Hosting)
+// ✅ 2. SERVE REACT FRONTEND (Monolith Mode)
 const clientBuildPath = path.join(__dirname, '../client/dist');
-const fs = require('fs');
 
-// Only try to serve static files if the folder actually exists
-if (fs.existsSync(clientBuildPath)) {
-  app.use(express.static(clientBuildPath));
-  app.get(/(.*)/, (req, res) => {
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
-  });
-  console.log("📁 Serving static frontend files from /client/dist");
-} else {
-  console.log("🌐 Running in API-only mode (No local frontend found)");
-  
-  // Basic landing page for the API root
-  app.get('/', (req, res) => {
-    res.json({ message: "M-Laundromat API is running. Use /api for requests." });
-  });
-}
+app.use(express.static(clientBuildPath));
+
+// Handle React Routing: Send index.html for any request that doesn't match an API route or static file
+app.get('*', (req, res) => {
+  // If the request starts with /api but didn't match any route above, send 404
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ message: 'API Route not found' });
+  }
+  // Otherwise, send the React app
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
+});
 
 // ============================================
 // ERROR HANDLER (Optional but recommended)
