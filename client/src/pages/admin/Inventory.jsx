@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import inventoryService from '../../services/inventoryService';
 import LoadingScreen from '../../components/LoadingScreen';
+import { useToast } from '../../context/ToastContext';
 import { Plus, Package, AlertTriangle, Search, Save, X, Trash2, Pencil } from 'lucide-react';
 
 export default function Inventory({ user, onLogout }) {
+  const toast = useToast();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,14 +50,14 @@ export default function Inventory({ user, onLogout }) {
     if (!addedStockStr) return;
     
     const addedStock = parseInt(addedStockStr);
-    if (isNaN(addedStock) || addedStock <= 0) return alert("Invalid number");
+    if (isNaN(addedStock) || addedStock <= 0) return toast("Invalid number", 'error');
 
     try {
       await inventoryService.update(item._id, { stockLevel: item.stockLevel + addedStock });
       fetchInventory(); 
-      alert(`Success! New stock: ${item.stockLevel + addedStock}`);
+      toast(`Success! New stock: ${item.stockLevel + addedStock}`, 'success');
     } catch (err) {
-      alert("Failed to restock");
+      toast("Failed to restock", 'error');
     }
   };
 
@@ -67,8 +69,9 @@ export default function Inventory({ user, onLogout }) {
       setShowAddModal(false);
       setNewItem({ itemName: '', stockLevel: 0, unitPrice: 0, costPrice: 0 });
       fetchInventory();
+      toast("Item added successfully!", 'success');
     } catch (err) {
-      alert("Error adding item: " + err.response?.data?.message);
+      toast("Error adding item: " + err.response?.data?.message, 'error');
     }
   };
 
@@ -83,9 +86,9 @@ export default function Inventory({ user, onLogout }) {
       
       setShowEditModal(false);
       setEditingItem(null);
-      alert("Item updated successfully!");
+      toast("Item updated successfully!", 'success');
     } catch (err) {
-      alert("Failed to update item.");
+      toast("Failed to update item.", 'error');
     }
   };
 
@@ -100,8 +103,9 @@ export default function Inventory({ user, onLogout }) {
     try {
       await inventoryService.deleteItem(id);
       setInventory(prev => prev.filter(item => item._id !== id)); 
+      toast("Item deleted successfully", 'success');
     } catch (err) {
-      alert("Failed to delete item.");
+      toast("Failed to delete item.", 'error');
     }
   };
 

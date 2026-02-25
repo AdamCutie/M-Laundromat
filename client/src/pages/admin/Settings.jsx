@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import settingService from '../../services/settingService';
 import LoadingScreen from '../../components/LoadingScreen';
+import { useToast } from '../../context/ToastContext';
 import { Save, Lock, Bell, Store, CreditCard, Megaphone } from 'lucide-react';
 
 export default function Settings({ user, onLogout }) {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState('pricing');
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false); // Added loading state for button
@@ -64,9 +66,9 @@ export default function Settings({ user, onLogout }) {
       
       // Optional: Refresh data to ensure sync
       await fetchSettings(); 
-      alert("Settings updated successfully!");
+      toast("Settings updated successfully!", 'success');
     } catch (err) {
-      alert("Failed to update settings.");
+      toast("Failed to update settings.", 'error');
     } finally {
       setIsSaving(false); // Stop loading spinner
     }

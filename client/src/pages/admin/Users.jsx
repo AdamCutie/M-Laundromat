@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import userService from '../../services/userService';
 import LoadingScreen from '../../components/LoadingScreen';
+import { useToast } from '../../context/ToastContext';
 import { Search, Plus, Mail, Phone, Shield, UserCog, Trash2, X, Save, User as UserIcon } from 'lucide-react';
 
 export default function Users({ user, onLogout }) {
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,8 +44,9 @@ export default function Users({ user, onLogout }) {
     try {
       await userService.deleteUser(userId);
       fetchUsers(); // Refresh list
+      toast(`User ${username} deleted`, 'success');
     } catch (err) {
-      alert("Failed to delete user");
+      toast("Failed to delete user", 'error');
     }
   };
 
@@ -58,12 +61,12 @@ export default function Users({ user, onLogout }) {
         phoneNumber: newUser.phoneNumber
       });
       
-      alert("User created successfully!");
+      toast("User created successfully!", 'success');
       setShowAddModal(false);
       setNewUser({ username: '', email: '', password: '', role: 'staff', phoneNumber: '' });
       fetchUsers();
     } catch (err) {
-      alert("Error: " + (err.response?.data?.message || err.message));
+      toast("Error: " + (err.response?.data?.message || err.message), 'error');
     }
   };
 

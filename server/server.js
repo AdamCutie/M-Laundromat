@@ -60,13 +60,13 @@ const clientBuildPath = path.join(__dirname, '../client/dist');
 
 app.use(express.static(clientBuildPath));
 
+// Handle API fallthroughs
+app.use('/api', (req, res) => {
+  res.status(404).json({ message: 'API Route not found' });
+});
+
 // Handle React Routing: Send index.html for any request that doesn't match an API route or static file
-app.get('*', (req, res) => {
-  // If the request starts with /api but didn't match any route above, send 404
-  if (req.path.startsWith('/api')) {
-    return res.status(404).json({ message: 'API Route not found' });
-  }
-  // Otherwise, send the React app
+app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 

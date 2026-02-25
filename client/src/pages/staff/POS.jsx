@@ -5,12 +5,14 @@ import settingService from '../../services/settingService';
 import orderService from '../../services/orderService';
 import machineService from '../../services/machineService';
 import LoadingScreen from '../../components/LoadingScreen';
+import { useToast } from '../../context/ToastContext';
 import { 
   Plus, Minus, Trash2, User, CreditCard, ShoppingBag, 
   Droplets, Wind, Package, WashingMachine, X, ChevronUp, Loader 
 } from 'lucide-react';
 
 export default function POS({ user, onLogout }) {
+  const toast = useToast();
   // --- STATE ---
   const [cart, setCart] = useState([]);
   const [customerSearch, setCustomerSearch] = useState('');
@@ -190,7 +192,7 @@ export default function POS({ user, onLogout }) {
 
     try {
       await orderService.createOrder(orderPayload);
-      alert(selectedMachines.length === 0 ? "✅ Order added to PENDING" : "✅ Order Started! Machines Activated.");
+      toast(selectedMachines.length === 0 ? "Order added to pending" : "Order started! Machines activated", 'success');
       
       // Reset Form
       setCart([]);
@@ -203,7 +205,7 @@ export default function POS({ user, onLogout }) {
       await loadData(); 
 
     } catch (err) {
-      alert("Checkout Failed: " + (err.response?.data?.message || err.message));
+      toast("Checkout Failed: " + (err.response?.data?.message || err.message), 'error');
     } finally {
       setIsSubmitting(false); // 🔓 Unlock button
     }

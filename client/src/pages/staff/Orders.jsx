@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import StaffLayout from '../../components/StaffLayout';
 import orderService from '../../services/orderService';
 import LoadingScreen from '../../components/LoadingScreen';
+import { useToast } from '../../context/ToastContext';
 import { 
   Search, Filter, ArrowRight, RefreshCw, Calendar, ChevronDown, 
   DollarSign, CheckCircle, AlertCircle 
 } from 'lucide-react';
 
 export default function StaffOrders({ user, onLogout }) {
+  const toast = useToast();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -46,8 +48,9 @@ export default function StaffOrders({ user, onLogout }) {
       try {
         await orderService.updateOrderStatus(order._id, { status: nextStatus });
         fetchOrders(); // Refresh list to update timestamps/machines
+        toast(`Order #${order._id.slice(-4)} moved to ${nextStatus}`, 'success');
       } catch (err) {
-        alert("Failed to update status");
+        toast("Failed to update status", 'error');
       }
     }
   };
@@ -64,8 +67,9 @@ export default function StaffOrders({ user, onLogout }) {
       setOrders(prev => prev.map(o => 
         o._id === orderId ? { ...o, paymentStatus: 'Paid' } : o
       ));
+      toast("Payment recorded successfully", 'success');
     } catch (err) {
-      alert("Failed to update payment: " + err.message);
+      toast("Failed to update payment: " + err.message, 'error');
     }
   };
 

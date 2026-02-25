@@ -1,11 +1,13 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom'; // ✅ Removed useNavigate
 import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { AlertCircle, LogIn, User } from 'lucide-react';
 import Logo from './Logo';
 
 export default function Login({ isModal = false, onSwitchToRegister }) { 
   const { login } = useContext(AuthContext);
+  const toast = useToast();
   // ✅ Removed const navigate = useNavigate();
   
   const [email, setEmail] = useState('');
@@ -22,8 +24,11 @@ export default function Login({ isModal = false, onSwitchToRegister }) {
 
     if (result.success) {
       // App.js RootDispatcher handles the redirect automatically
+      toast("Welcome back!", 'success');
     } else {
-      setError(result.message || 'Invalid email or password');
+      const msg = result.message || 'Invalid email or password';
+      setError(msg);
+      toast(msg, 'error');
       setLoading(false);
     }
   };

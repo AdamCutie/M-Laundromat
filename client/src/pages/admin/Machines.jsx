@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout'; // Default fallback
 import machineService from '../../services/machineService';
 import LoadingScreen from '../../components/LoadingScreen';
+import { useToast } from '../../context/ToastContext';
 import { 
   Plus, Circle, WashingMachine, Power, Wrench, 
   CheckCircle, Clock, Save, X, Trash2, Wind 
@@ -49,6 +50,7 @@ function Timer({ startTime, onComplete }) {
 // MAIN COMPONENT
 // ==========================================
 export default function Machines({ user, onLogout, Layout = AdminLayout }) {
+  const toast = useToast();
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,7 +79,7 @@ export default function Machines({ user, onLogout, Layout = AdminLayout }) {
       await machineService.toggleStatus(machine._id, machine.status);
       fetchMachines();
     } catch (err) {
-      alert("Failed to update status");
+      toast("Failed to update status", 'error');
     }
   };
 
@@ -91,8 +93,9 @@ export default function Machines({ user, onLogout, Layout = AdminLayout }) {
          await machineService.toggleStatus(machine._id, machine.status, newStatus); 
       }
       fetchMachines();
+      toast(`Machine set to ${newStatus}`, 'success');
     } catch (err) {
-      alert("Failed to update maintenance status.");
+      toast("Failed to update maintenance status.", 'error');
     }
   };
 
@@ -104,24 +107,25 @@ export default function Machines({ user, onLogout, Layout = AdminLayout }) {
         type: newMachine.type,
         status: 'Available'
       });
-      alert("Machine Added Successfully!");
+      toast("Machine Added Successfully!", 'success');
       setShowAddModal(false);
       setNewMachine({ machineNumber: '', type: 'Washer' });
       fetchMachines();
     } catch (err) {
-      alert(err.response?.data?.message || "Error adding machine");
+      toast(err.response?.data?.message || "Error adding machine", 'error');
     }
   };
 
   const handleDeleteMachine = async (id, number, status) => {
-    if (status === 'In Use') return alert("Cannot delete a running machine!");
+    if (status === 'In Use') return toast("Cannot delete a running machine!", 'error');
     if (!window.confirm(`Permanently delete ${number}?`)) return;
 
     try {
       await machineService.deleteMachine(id);
       setMachines(prev => prev.filter(m => m._id !== id));
+      toast("Machine deleted", 'success');
     } catch (err) {
-      alert("Failed to delete machine.");
+      toast("Failed to delete machine.", 'error');
     }
   };
 

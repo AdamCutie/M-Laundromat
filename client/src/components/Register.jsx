@@ -1,11 +1,13 @@
 import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { UserPlus, AlertCircle, Phone } from 'lucide-react'; 
 import Logo from './Logo'; 
 
 export default function Register({ isModal = false, onSwitchToLogin }) {
   const { register } = useContext(AuthContext);
+  const toast = useToast();
   
   const [formData, setFormData] = useState({
     username: '',
@@ -26,7 +28,9 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords don't match");
+      const msg = "Passwords don't match";
+      setError(msg);
+      toast(msg, 'error');
       return;
     }
 
@@ -41,12 +45,18 @@ export default function Register({ isModal = false, onSwitchToLogin }) {
       });
 
       if (!result.success) {
-        setError(result.message || 'Registration failed');
+        const msg = result.message || 'Registration failed';
+        setError(msg);
+        toast(msg, 'error');
         setLoading(false);
+      } else {
+        toast("Account created successfully! Welcome!", 'success');
       }
       // If success, App.js redirects automatically
     } catch (err) {
-      setError('An unexpected error occurred.');
+      const msg = 'An unexpected error occurred.';
+      setError(msg);
+      toast(msg, 'error');
       setLoading(false);
     }
   };

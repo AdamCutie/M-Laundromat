@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import CustomerLayout from '../../components/CustomerLayout';
 import AuthContext from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import api from '../../services/api';
 import { 
   Save, User, Mail, Phone, MapPin, 
@@ -9,6 +10,7 @@ import {
 
 export default function CustomerProfile({ onLogout }) {
   const { user } = useContext(AuthContext);
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   
@@ -49,13 +51,12 @@ export default function CustomerProfile({ onLogout }) {
 
       if (response.data) {
         localStorage.setItem('user', JSON.stringify(response.data));
-        window.location.reload(); 
+        toast('Profile updated successfully!', 'success');
+        setTimeout(() => window.location.reload(), 1500); 
       }
-
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (err) {
       console.error(err);
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to update profile.' });
+      toast(err.response?.data?.message || 'Failed to update profile.', 'error');
     } finally {
       setLoading(false);
     }

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import attendanceService from '../services/attendanceService';
 import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const StaffAttendance = () => {
   const { user } = useContext(AuthContext);
+  const toast = useToast();
   const [status, setStatus] = useState('Loading...');
   const [record, setRecord] = useState(null);
 
@@ -25,10 +27,10 @@ const StaffAttendance = () => {
   const handleClockIn = async () => {
     try {
       await attendanceService.clockIn();
-      alert("✅ You are now Clocked In!");
+      toast("✅ You are now Clocked In!", 'success');
       checkStatus(); // Refresh to update the button
     } catch (err) {
-      alert("Error: " + (err.response?.data?.message || err.message));
+      toast("Error: " + (err.response?.data?.message || err.message), 'error');
     }
   };
 
@@ -36,10 +38,10 @@ const StaffAttendance = () => {
     if (!window.confirm("Are you sure you want to clock out?")) return;
     try {
       await attendanceService.clockOut();
-      alert("👋 Shift Ended. See you tomorrow!");
+      toast("👋 Shift Ended. See you tomorrow!", 'success');
       checkStatus();
     } catch (err) {
-      alert("Error: " + (err.response?.data?.message || err.message));
+      toast("Error: " + (err.response?.data?.message || err.message), 'error');
     }
   };
 

@@ -2,9 +2,9 @@ import axios from 'axios';
 
 // Create a configured instance of axios
 const api = axios.create({
-  // In a Monolith (Railway Only), we use relative paths.
-  // This automatically talks to the same domain the frontend is hosted on.
-  baseURL: '/api', 
+  // In development, Vite uses the proxy in vite.config.js
+  // In production (Railway), it uses the same domain.
+  baseURL: import.meta.env.VITE_API_URL || '/api', 
   headers: {
     'Content-Type': 'application/json'
   }
