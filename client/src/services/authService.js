@@ -28,9 +28,15 @@ const logout = () => {
 
 // Get Current User
 const getCurrentUser = () => {
-  const userStr = localStorage.getItem('user');
-  if (userStr) return JSON.parse(userStr);
-  return null;
+  try {
+    const userStr = localStorage.getItem('user');
+    if (!userStr || userStr === 'undefined') return null;
+    return JSON.parse(userStr);
+  } catch (err) {
+    console.error("Error parsing user from storage", err);
+    localStorage.removeItem('user');
+    return null;
+  }
 };
 
 const authService = {

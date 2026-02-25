@@ -4,6 +4,10 @@ import AdminLayout from '../../components/AdminLayout';
 import orderService from '../../services/orderService';
 import machineService from '../../services/machineService';
 import { DollarSign, ShoppingCart, Boxes, Users, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
+import { 
+  LineChart, Line, PieChart, Pie, Cell, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+} from 'recharts';
 import LoadingScreen from '../../components/LoadingScreen';
 
 // ✅ METRIC CARD (Mobile Optimized)
